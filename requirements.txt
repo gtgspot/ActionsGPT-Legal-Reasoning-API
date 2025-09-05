@@ -1,3 +1,10 @@
+bun==1.2.10
+java==21
+bazelisk / bazel
+erlang==27.1.2
+elixir==1.18.3
+python==3.13
+pip==25.2
 fastapi==0.115.0
 uvicorn==0.30.6
 httpx==0.27.2
