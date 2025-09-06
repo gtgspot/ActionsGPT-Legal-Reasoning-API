@@ -15,18 +15,71 @@ def main() -> None:
     openapi = app.openapi()
     (site / "openapi.json").write_text(json.dumps(openapi, indent=2))
 
-    # Minimal ReDoc page
+    # Assets
+    assets = site / "assets"
+    assets.mkdir(exist_ok=True)
+
+    primary = os.environ.get("PAGES_PRIMARY_COLOR", "#1f6feb")
+    accent = os.environ.get("PAGES_ACCENT_COLOR", "#0969da")
+    title = os.environ.get("PAGES_SITE_TITLE", "ActionsGPT — Legal Reasoning API")
+
+    css = f""":root {{
+  --brand-primary: {primary};
+  --brand-accent: {accent};
+  --bg: #0b0c10;
+  --panel: #111317;
+  --text: #e6edf3;
+  --muted: #9aa7b2;
+  --border: #23262e;
+}}
+
+* {{ box-sizing: border-box; }}
+html, body {{ height: 100%; margin: 0; }}
+body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); }}
+.header {{ display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); background: #0d1117; position: sticky; top: 0; z-index: 5; }}
+.brand {{ font-weight: 600; letter-spacing: 0.2px; }}
+.brand a {{ color: var(--text); text-decoration: none; }}
+.btns {{ display: flex; gap: 8px; }}
+.btn {{ appearance: none; border: 1px solid var(--border); background: var(--panel); color: var(--text); padding: 8px 10px; border-radius: 8px; cursor: pointer; }}
+.btn.primary {{ background: var(--brand-primary); border-color: var(--brand-primary); color: white; }}
+.btn:hover {{ filter: brightness(1.05); }}
+.layout {{ display: grid; grid-template-rows: auto 1fr; min-height: 100vh; }}
+.content {{ display: grid; grid-template-columns: 1fr; }}
+.hero {{ padding: 18px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(31,111,235,0.10), transparent 60%); }}
+.links a {{ color: var(--brand-primary); text-decoration: none; }}
+.links a:hover {{ text-decoration: underline; }}
+.api {{ height: calc(100vh - 120px); }}
+@media (min-width: 1000px) {{ .api {{ height: calc(100vh - 80px); }} }}
+"""
+    (assets / "styles.css").write_text(css)
+
+    # Enhanced ReDoc page with header and quick links
     html = f"""<!doctype html>
-    <html>
+    <html lang=\"en\">
       <head>
         <meta charset=\"utf-8\" />
         <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-        <title>ActionsGPT — Legal Reasoning API</title>
+        <title>{title}</title>
         <link rel=\"icon\" href=\"data:,\" />
-        <style>body {{ margin: 0; padding: 0; }} .wrap {{ height: 100vh; }}</style>
+        <link rel=\"stylesheet\" href=\"assets/styles.css\" />
       </head>
       <body>
-        <redoc spec-url=\"openapi.json\" class=\"wrap\"></redoc>
+        <div class=\"layout\">
+          <header class=\"header\">
+            <div class=\"brand\"><a href=\"./\">{title}</a></div>
+            <nav class=\"btns\">
+              <a class=\"btn\" href=\"openapi.json\" target=\"_blank\" rel=\"noopener\">OpenAPI JSON</a>
+              <a class=\"btn primary\" href=\"#\" onclick=\"document.querySelector('redoc').scrollIntoView({{behavior:'smooth'}});return false;\">View API</a>
+            </nav>
+          </header>
+          <section class=\"hero\">
+            <div class=\"links\">Fast, typed FastAPI endpoints for legal ingestion and lightweight research. Explore the API below or fetch the <a href=\"openapi.json\">OpenAPI schema</a>.</div>
+          </section>
+          <section class=\"content\">
+            <redoc spec-url=\"openapi.json\" class=\"api\"></redoc>
+          </section>
+        </div>
+
         <script src=\"https://cdn.jsdelivr.net/npm/redoc/bundles/redoc.standalone.js\"></script>
       </body>
     </html>"""
