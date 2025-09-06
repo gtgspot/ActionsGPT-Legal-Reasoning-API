@@ -38,13 +38,14 @@ def main() -> None:
 html, body {{ height: 100%; margin: 0; }}
 body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); }}
 .container {{ max-width: 1200px; margin: 0 auto; padding: 0 18px; }}
-.header {{ display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); background: #0d1117; position: sticky; top: 0; z-index: 5; }}
+.header {{ display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); background: #0d1117; position: sticky; top: 0; z-index: 5; backdrop-filter: saturate(140%) blur(6px); }}
 .brand {{ font-weight: 600; letter-spacing: 0.2px; }}
 .brand a {{ color: var(--text); text-decoration: none; }}
 .btns {{ display: flex; gap: 8px; }}
-.btn {{ appearance: none; border: 1px solid var(--border); background: var(--panel); color: var(--text); padding: 8px 10px; border-radius: 8px; cursor: pointer; }}
+.btn {{ appearance: none; border: 1px solid var(--border); background: var(--panel); color: var(--text); padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: transform .08s ease, filter .15s ease; }}
 .btn.primary {{ background: var(--brand-primary); border-color: var(--brand-primary); color: white; }}
-.btn:hover {{ filter: brightness(1.05); }}
+.btn:hover {{ filter: brightness(1.08); transform: translateY(-1px); }}
+.btn:active { transform: translateY(0); }
 .layout {{ display: grid; grid-template-rows: auto 1fr; min-height: 100vh; }}
 .content {{ display: grid; grid-template-columns: 1fr; }}
 .hero {{ padding: 48px 18px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(31,111,235,0.10), transparent 60%); }}
@@ -77,8 +78,9 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
   const API_BASE = (window.__CONFIG__ && window.__CONFIG__.apiBase) || '';
   const api = (p, opts={}) => fetch((API_BASE||'') + p, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts));
 
-  async function searchSources(q) {
-    const r = await api('/sources/search', { method:'POST', body: JSON.stringify({ query:q, limit: 20 }) });
+  async function searchSources(q, opts={}) {
+    const body = Object.assign({ query:q, per_page: 10, include_snippets: true }, opts);
+    const r = await api('/sources/search', { method:'POST', body: JSON.stringify(body) });
     return await r.json();
   }
 
@@ -103,6 +105,7 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
     for (const it of items.results){
       const row = h('div',{class:'item'},
         h('div',{}, h('a',{href:it.uri, target:'_blank', rel:'noopener'}, it.title || it.uri)),
+        it.snippet ? h('div',{class:'muted'}, it.snippet) : null,
         h('div',{class:'tag'}, `${it.type||'other'} • score ${it.score??''}`)
       );
       list.appendChild(row);
@@ -114,11 +117,56 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
     const form = document.querySelector('#explorer-form');
     const input = document.querySelector('#explorer-input');
     const out = document.querySelector('#explorer-out');
+    const domainInput = document.querySelector('#explorer-domain');
+    const typeInput = document.querySelector('#explorer-type');
+    const pager = document.querySelector('#explorer-pager');
+    let page = 1;
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       out.innerHTML = '<div class="muted">Searching…</div>';
-      try { const data = await searchSources(input.value.trim()); renderList(out, data); }
+      const domains = domainInput.value.trim() ? domainInput.value.trim().split(',').map(s=>s.trim()).filter(Boolean) : undefined;
+      const content_types = typeInput.value ? [typeInput.value] : undefined;
+      page = 1;
+      try { const data = await searchSources(input.value.trim(), { domains, content_types, page }); renderList(out, data); renderPager(pager, data, (p)=>doPage(p)); }
       catch (err) { out.innerHTML = '<div class="muted">Error performing search.</div>'; }
+    });
+
+    async function doPage(p){
+      page = p;
+      out.innerHTML = '<div class="muted">Loading…</div>';
+      const domains = domainInput.value.trim() ? domainInput.value.trim().split(',').map(s=>s.trim()).filter(Boolean) : undefined;
+      const content_types = typeInput.value ? [typeInput.value] : undefined;
+      const data = await searchSources(input.value.trim(), { domains, content_types, page });
+      renderList(out, data); renderPager(pager, data, (p)=>doPage(p));
+    }
+  }
+
+  function renderPager(container, data, onGo){
+    container.innerHTML='';
+    if (!data || !data.total) return;
+    const { total, page, per_page } = data;
+    const pages = Math.ceil(total / per_page);
+    const bar = h('div', { class:'btns' });
+    const mk = (p,label=String(p))=> h('button',{ class:'btn'+(p===page?' primary':''), onclick:()=>onGo(p) }, label);
+    const start = Math.max(1, page-2);
+    const end = Math.min(pages, page+2);
+    if (page>1) bar.appendChild(mk(page-1,'‹'));
+    for (let p=start;p<=end;p++) bar.appendChild(mk(p));
+    if (page<pages) bar.appendChild(mk(page+1,'›'));
+    container.appendChild(bar);
+  }
+
+  // theme toggle
+  function initTheme(){
+    const key='theme';
+    const root=document.documentElement;
+    const saved=localStorage.getItem(key);
+    if (saved) root.setAttribute('data-theme', saved);
+    const tgl=document.getElementById('theme-tgl');
+    tgl?.addEventListener('change', (e)=>{
+      const next = e.target.checked? 'light':'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem(key, next);
     });
   }
 
@@ -146,6 +194,7 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     initExplorer();
     initMap();
   });
@@ -173,6 +222,8 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
               <a class=\"btn\" href=\"api.html\">API Docs</a>
               <a class=\"btn\" href=\"explorer.html\">Explorer</a>
               <a class=\"btn primary\" href=\"map.html\">Citations Map</a>
+              <a class="btn" href="kb.html">Knowledge Base</a>
+              <span class="theme-toggle"><input id="theme-tgl" type="checkbox" /><label for="theme-tgl"><span class="dot"></span> Light</label></span>
             </nav>
           </header>
           <section class=\"hero\">
@@ -279,3 +330,11 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
 
 if __name__ == "__main__":
     main()
+.theme-toggle { margin-left: 8px; }
+.theme-toggle input { display: none; }
+.theme-toggle label { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); padding:6px 10px; border-radius: 999px; cursor:pointer; background: var(--panel);} 
+.theme-toggle .dot { width: 10px; height:10px; border-radius:50%; background: var(--brand-primary);} 
+
+/* light theme */
+[data-theme="light"] { --bg: #f6f8fa; --panel:#fff; --text:#0b0c10; --muted:#57606a; --border:#d0d7de; }
+[data-theme="light"] .hero { background: linear-gradient(180deg, rgba(9,105,218,0.08), transparent 60%); }

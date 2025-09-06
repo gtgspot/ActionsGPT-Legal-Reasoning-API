@@ -45,7 +45,10 @@ class FetchRequest(BaseModel):
 class SourcesSearchRequest(BaseModel):
     query: str
     domains: Optional[List[str]] = None
-    limit: Optional[int] = 20
+    content_types: Optional[List[str]] = None  # e.g., ["judgment", "statute", "other"]
+    page: Optional[int] = 1
+    per_page: Optional[int] = 20
+    include_snippets: bool = True
 
 
 class PrecedentsSearchRequest(BaseModel):
@@ -70,4 +73,3 @@ class ComplianceCheckRequest(BaseModel):
 class DraftDisclosureRequest(BaseModel):
     doc_id: str
     items_requested: List[str]
-

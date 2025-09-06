@@ -15,7 +15,7 @@ from ..schemas import (
     SalienceScoreRequest,
 )
 from ..state import DOCS
-from ..utils import guess_citations
+from ..utils import guess_citations, now_iso
 
 
 router = APIRouter()
@@ -56,38 +56,80 @@ def map_legislation(payload: Dict[str, Any]):
     doc_id = payload.get("doc_id")
     if not doc_id or doc_id not in DOCS:
         raise HTTPException(404, "doc not found")
-    nodes = []
-    edges = []
-    n_act = {
-        "id": "rsa1986",
-        "title": "Road Safety Act 1986 (Vic)",
-        "node_type": "Act",
-        "uri": CANON["Road Safety Act 1986 (Vic)"],
-        "provision": "s 49",
-        "citation_aglc4": "Road Safety Act 1986 (Vic)",
-    }
-    n_regs = {
-        "id": "rsgr2019",
-        "title": "Road Safety (General) Regulations 2019 (Vic)",
-        "node_type": "Regulation",
-        "uri": CANON["Road Safety (General) Regulations 2019 (Vic)"],
-    }
-    nodes.extend([n_act, n_regs])
-    edges.append({"from": "rsgr2019", "to": "rsa1986", "relation": "implements"})
-    n_rules = {
-        "id": "mccr2019",
-        "title": "Magistrates’ Court Criminal Procedure Rules 2019 (Vic)",
-        "node_type": "Rule",
-        "uri": CANON["Magistrates’ Court Criminal Procedure Rules 2019 (Vic)"],
-    }
-    n_cpa = {
-        "id": "cpa2009",
-        "title": "Criminal Procedure Act 2009 (Vic)",
-        "node_type": "Act",
-        "uri": CANON["Criminal Procedure Act 2009 (Vic)"],
-    }
-    nodes.extend([n_rules, n_cpa])
-    edges.append({"from": "mccr2019", "to": "cpa2009", "relation": "interprets"})
+    rec = DOCS[doc_id]
+    text = "\n\n".join(rec.get("text_chunks", []))
+    citations = guess_citations(text)
+    nodes: List[Dict[str, Any]] = []
+    edges: List[Dict[str, Any]] = []
+    # Document node with time facet
+    nodes.append({
+        "id": f"doc:{doc_id}",
+        "title": rec.get("meta", {}).get("title") or f"Document {doc_id[:8]}",
+        "node_type": "Document",
+        "created_at": rec.get("created_at"),
+    })
+    # Canon nodes + edges with provenance and pinpoints
+    for ref in citations:
+        sid = ref.source_id
+        if not any(n.get("id") == sid for n in nodes):
+            nodes.append({
+                "id": sid,
+                "title": ref.title,
+                "node_type": "Statute" if "Act" in (ref.title or "") else "Rule",
+                "uri": ref.uri,
+            })
+        # find a small snippet around pinpoint if present
+        snippet = None
+        if ref.pinpoint:
+            loc = text.lower().find(ref.pinpoint.lower())
+            if loc >= 0:
+                start = max(0, loc - 60)
+                end = min(len(text), loc + 60)
+                snippet = text[start:end]
+        edges.append({
+            "from": f"doc:{doc_id}",
+            "to": sid,
+            "relation": "cites",
+            "pinpoint": ref.pinpoint,
+            "provenance": {"doc_id": doc_id, "snippet": snippet},
+            "time": rec.get("created_at"),
+        })
+    return {"nodes": nodes, "edges": edges}
+
+
+@router.get("/map/citations/{doc_id}")
+def map_citations(doc_id: str):
+    if not doc_id or doc_id not in DOCS:
+        raise HTTPException(404, "doc not found")
+    rec = DOCS[doc_id]
+    text = "\n\n".join(rec.get("text_chunks", []))
+    citations = guess_citations(text)
+    nodes: List[Dict[str, Any]] = [
+        {
+            "id": f"doc:{doc_id}",
+            "title": rec.get("meta", {}).get("title") or f"Document {doc_id[:8]}",
+            "node_type": "Document",
+            "created_at": rec.get("created_at"),
+        }
+    ]
+    edges: List[Dict[str, Any]] = []
+    for ref in citations:
+        sid = ref.source_id
+        if not any(n.get("id") == sid for n in nodes):
+            nodes.append({
+                "id": sid,
+                "title": ref.title,
+                "node_type": "Statute" if "Act" in (ref.title or "") else "Rule",
+                "uri": ref.uri,
+            })
+        edges.append({
+            "from": f"doc:{doc_id}",
+            "to": sid,
+            "relation": "cites",
+            "pinpoint": ref.pinpoint,
+            "provenance": {"doc_id": doc_id},
+            "time": rec.get("created_at"),
+        })
     return {"nodes": nodes, "edges": edges}
 
 
@@ -245,4 +287,3 @@ def compliance_check(payload: ComplianceCheckRequest):
         )
 
     return {"issues": issues}
-
