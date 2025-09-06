@@ -330,11 +330,3 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
 
 if __name__ == "__main__":
     main()
-.theme-toggle { margin-left: 8px; }
-.theme-toggle input { display: none; }
-.theme-toggle label { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); padding:6px 10px; border-radius: 999px; cursor:pointer; background: var(--panel);} 
-.theme-toggle .dot { width: 10px; height:10px; border-radius:50%; background: var(--brand-primary);} 
-
-/* light theme */
-[data-theme="light"] { --bg: #f6f8fa; --panel:#fff; --text:#0b0c10; --muted:#57606a; --border:#d0d7de; }
-[data-theme="light"] .hero { background: linear-gradient(180deg, rgba(9,105,218,0.08), transparent 60%); }

@@ -5,7 +5,7 @@ from urllib.parse import quote_plus
 
 import httpx
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 
 from ..config import CANON, USER_AGENT
 from ..schemas import (
@@ -13,17 +13,21 @@ from ..schemas import (
     ComplianceCheckRequest,
     PrecedentsSearchRequest,
     SalienceScoreRequest,
+    ExtractStructureRequest,
+    CitationRequest,
+    QARequest,
 )
 from ..state import DOCS
 from ..utils import guess_citations, now_iso
+from ..security import api_key_guard
 
 
-router = APIRouter()
+router = APIRouter(dependencies=[api_key_guard])
 
 
 @router.post("/extract/structure")
-def extract_structure(payload: Dict[str, Any]):
-    doc_id = payload.get("doc_id")
+def extract_structure(payload: ExtractStructureRequest):
+    doc_id = payload.doc_id
     if not doc_id or doc_id not in DOCS:
         raise HTTPException(404, "doc not found")
     text = "\n\n".join(DOCS[doc_id].get("text_chunks", []))
@@ -134,12 +138,12 @@ def map_citations(doc_id: str):
 
 
 @router.post("/cite/aglc4")
-def cite_aglc4(payload: Dict[str, Any]):
-    targets = (payload or {}).get("targets") or []
+def cite_aglc4(payload: CitationRequest):
+    targets = payload.targets or []
     out = []
     for t in targets:
-        ident = t.get("identifier") or ""
-        pinpoint = t.get("pinpoint")
+        ident = (t.identifier or "").strip()
+        pinpoint = t.pinpoint
         uri = CANON.get(ident)
         title = ident or "Unknown"
         out.append(
@@ -287,3 +291,20 @@ def compliance_check(payload: ComplianceCheckRequest):
         )
 
     return {"issues": issues}
+
+
+@router.post("/qa")
+def qa_answer(payload: QARequest):
+    doc_id = payload.doc_id
+    if not doc_id or doc_id not in DOCS:
+        raise HTTPException(404, "doc not found")
+    # Minimal offline stub; produce answer shell with citations to known canon
+    text = "\n\n".join(DOCS[doc_id].get("text_chunks", []))
+    cites = [c.model_dump() for c in guess_citations(text)]
+    answer = {
+        "answer_markdown": f"Based on the materials provided, preliminary analysis suggests focusing on the most salient statutory provisions and ensuring procedural compliance. ({len(cites)} citation(s) attached)",
+        "citations": cites,
+        "confidence": 0.6,
+        "coverage_gaps": ["Limited context for facts-in-issue", "No attachments parsed"],
+    }
+    return answer

@@ -4,10 +4,11 @@ from fastapi import APIRouter, HTTPException
 
 from ..config import CANON
 from ..schemas import DraftDisclosureRequest
+from ..security import api_key_guard
 from ..state import DOCS
 
 
-router = APIRouter()
+router = APIRouter(dependencies=[api_key_guard])
 
 
 @router.post("/drafts/disclosure-request")
@@ -44,4 +45,3 @@ def disclosure_request(payload: DraftDisclosureRequest):
             },
         ],
     }
-

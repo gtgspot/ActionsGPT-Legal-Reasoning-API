@@ -10,9 +10,10 @@ from ..config import ALLOWED_DOMAINS, USER_AGENT
 from ..integrations.http import fetch_url
 from ..schemas import FetchRequest, SourcesSearchRequest
 from ..utils import now_iso
+from ..security import api_key_guard
 
 
-router = APIRouter()
+router = APIRouter(dependencies=[api_key_guard])
 
 
 @router.post("/sources/search")
