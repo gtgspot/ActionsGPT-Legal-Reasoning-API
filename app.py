@@ -10,6 +10,7 @@ from api.routers.drafts import router as drafts_router
 from api.routers.uploads import router as uploads_router
 from api.routers.webhooks import router as webhooks_router
 from api.routers.canon import router as canon_router
+from api.routers.admin import router as admin_router
 
 
 app = FastAPI(
@@ -34,6 +35,7 @@ app.include_router(drafts_router)
 app.include_router(uploads_router)
 app.include_router(webhooks_router)
 app.include_router(canon_router)
+app.include_router(admin_router)
 
 
 def custom_openapi():

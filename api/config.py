@@ -65,3 +65,10 @@ def _load_canon() -> Dict[str, str]:
     return canon
 
 CANON: Dict[str, str] = _load_canon()
+
+
+def reload_canon() -> int:
+    """Reload the CANON mapping from disk, returning number of entries."""
+    global CANON
+    CANON = _load_canon()
+    return len(CANON)
