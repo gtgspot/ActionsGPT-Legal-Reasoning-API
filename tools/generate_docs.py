@@ -88,6 +88,14 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
     const r = await api('/map/legislation', { method:'POST', body: JSON.stringify({ doc_id: 'preview' })});
     return await r.json();
   }
+  async function loadMapDoc(id){
+    const r = await api('/map/citations/'+encodeURIComponent(id));
+    return await r.json();
+  }
+  async function listRecentDocs(){
+    const r = await api('/documents/recent');
+    return await r.json();
+  }
 
   function h(tag, attrs={}, ...children){
     const el = document.createElement(tag);
@@ -172,31 +180,73 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
 
   async function initMap(){
     const container = document.getElementById('graph');
+    const picker = document.getElementById('doc-picker');
     if (!container) return;
+    // Populate recent docs
     try {
-      const data = await loadMap();
-      const cy = window.cytoscape({
-        container,
-        boxSelectionEnabled: false,
-        style: [
-          { selector: 'node', style: { 'label': 'data(title)', 'background-color': 'var(--brand-primary)', 'color':'#fff', 'text-valign':'center', 'text-halign':'center', 'font-size':'10px', 'width': 'label', 'height':'label', 'padding':'8px', 'shape':'round-rectangle' } },
-          { selector: 'edge', style: { 'curve-style':'bezier', 'target-arrow-shape':'triangle', 'line-color':'#6ea8fe55', 'target-arrow-color':'#6ea8fe55' } }
-        ],
-        elements: {
-          nodes: (data.nodes||[]).map(n => ({ data: n })),
-          edges: (data.edges||[]).map(e => ({ data: { id: `${e.from}->${e.to}`, source: e.from, target: e.to } }))
-        },
-        layout: { name: 'cose', animate: false }
-      });
-    } catch (e) {
-      container.innerHTML = '<div class="muted">Failed to load graph.</div>';
+      const recent = await listRecentDocs();
+      const items = (recent.items||[]);
+      if (picker && items.length){
+        picker.innerHTML = '';
+        items.forEach(it=>{
+          const opt=document.createElement('option'); opt.value=it.doc_id; opt.textContent = `${it.title} (${(it.doc_id||'').slice(0,8)})`; picker.appendChild(opt);
+        });
+      }
+    } catch {}
+    // Render graph helper
+    async function render(data){
+      try {
+        window.cytoscape({
+          container,
+          boxSelectionEnabled: false,
+          style: [
+            { selector: 'node', style: { 'label': 'data(title)', 'background-color': 'var(--brand-primary)', 'color':'#fff', 'text-valign':'center', 'text-halign':'center', 'font-size':'10px', 'width': 'label', 'height':'label', 'padding':'8px', 'shape':'round-rectangle' } },
+            { selector: 'edge', style: { 'curve-style':'bezier', 'target-arrow-shape':'triangle', 'line-color':'#6ea8fe55', 'target-arrow-color':'#6ea8fe55' } }
+          ],
+          elements: {
+            nodes: (data.nodes||[]).map(n => ({ data: n })),
+            edges: (data.edges||[]).map(e => ({ data: { id: `${e.from}->${e.to}`, source: e.from, target: e.to } }))
+          },
+          layout: { name: 'cose', animate: false }
+        });
+      } catch { container.innerHTML = '<div class="muted">Failed to load graph.</div>'; }
     }
+    // Initial
+    try { const data = await loadMap(); await render(data); } catch { container.innerHTML = '<div class="muted">No preview available.</div>'; }
+    // React to picker
+    picker?.addEventListener('change', async (e)=>{
+      container.innerHTML = '<div class="muted">Loading…</div>';
+      const id = e.target.value; const data = await loadMapDoc(id); await render(data);
+    });
+  }
+
+  async function chat(doc_id, messages){
+    const r = await api('/chat', { method:'POST', body: JSON.stringify({ doc_id, messages })});
+    return await r.json();
+  }
+
+  function initChat(){
+    const log=document.getElementById('chat-log');
+    const form=document.getElementById('chat-form');
+    const inp=document.getElementById('chat-input');
+    const doc=document.getElementById('chat-doc');
+    if (!form || !log || !inp || !doc) return; // no chat page
+    let history=[];
+    function append(role,content){const b=document.createElement('div');b.className='item';b.innerText=(role==='assistant'?'AI: ':'You: ')+content;log.appendChild(b);log.scrollTop=log.scrollHeight;}
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const q=inp.value.trim(); if(!q||!doc.value.trim()) return;
+      append('user', q); history.push({role:'user', content:q}); inp.value='';
+      try{const data=await chat(doc.value.trim(), history); const msg=(data.messages&&data.messages[0])?data.messages[0].content:'(no reply)'; append('assistant', msg); history.push({role:'assistant', content:msg});}
+      catch{append('assistant','(error)');}
+    });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initExplorer();
     initMap();
+    initChat();
   });
 })();
 """
@@ -319,6 +369,57 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
     api_html = f"""<!doctype html>
     <html lang=\"en\">\n      <head>\n        <meta charset=\"utf-8\" />\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n        <title>{title} — API</title>\n        <link rel=\"icon\" href=\"data:,\" />\n        <link rel=\"stylesheet\" href=\"assets/styles.css\" />\n      </head>\n      <body>\n        <div class=\"layout\">\n          <header class=\"header\">\n            <div class=\"brand\"><a href=\"./\">{title}</a></div>\n            <nav class=\"btns\">\n              <a class=\"btn primary\" href=\"api.html\">API Docs</a>\n              <a class=\"btn\" href=\"explorer.html\">Explorer</a>\n              <a class=\"btn\" href=\"map.html\">Citations Map</a>\n            </nav>\n          </header>\n          <section class=\"content\">\n            <redoc spec-url=\"openapi.json\" class=\"api\"></redoc>\n          </section>\n        </div>\n\n        <script src=\"https://cdn.jsdelivr.net/npm/redoc/bundles/redoc.standalone.js\"></script>\n      </body>\n    </html>"""
     (site / "api.html").write_text(api_html)
+
+    # Chat page
+    chat_html = """<!doctype html>
+    <html lang=\"en\">
+      <head>
+        <meta charset=\"utf-8\" />
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+        <title>{title} — Chat</title>
+        <link rel=\"stylesheet\" href=\"assets/styles.css\" />
+        <script defer src=\"assets/config.js\"></script>
+        <script defer src=\"assets/app.js\"></script>
+      </head>
+      <body>
+        <div class=\"layout\">
+          <header class=\"header\">
+            <div class=\"brand\"><a href=\"./\">Chat</a></div>
+            <nav class=\"btns\">
+              <a class=\"btn\" href=\"api.html\">API Docs</a>
+              <a class=\"btn\" href=\"explorer.html\">Explorer</a>
+              <a class=\"btn\" href=\"map.html\">Citations Map</a>
+              <a class=\"btn\" href=\"kb.html\">Knowledge Base</a>
+              <span class=\"theme-toggle\"><input id=\"theme-tgl\" type=\"checkbox\" /><label for=\"theme-tgl\"><span class=\"dot\"></span> Light</label></span>
+            </nav>
+          </header>
+          <section class=\"container\" style=\"padding:18px\">\n            <div class=\"grid\" style=\"grid-template-columns: 1fr; gap:10px;\">\n              <input id=\"chat-doc\" class=\"input\" placeholder=\"doc_id (required)\"/>\n              <div id=\"chat-log\" class=\"list\" style=\"max-height: calc(100vh - 280px); overflow:auto;\"></div>\n              <form id=\"chat-form\" class=\"grid\" style=\"grid-template-columns: 1fr auto; gap:10px;\">\n                <input id=\"chat-input\" class=\"input\" placeholder=\"Ask a question…\" />\n                <button class=\"btn primary\" type=\"submit\">Send</button>\n              </form>\n            </div>\n          </section>
+        </div>
+        <script>
+        (()=>{
+          const API_BASE=(window.__CONFIG__&&window.__CONFIG__.apiBase)||'';
+          const log=document.getElementById('chat-log');
+          const form=document.getElementById('chat-form');
+          const inp=document.getElementById('chat-input');
+          const doc=document.getElementById('chat-doc');
+          let history=[];
+          function append(role,content){const b=document.createElement('div');b.className='item';b.innerText=(role==='assistant'?'AI: ':'You: ')+content;log.appendChild(b);log.scrollTop=log.scrollHeight;}
+          form.addEventListener('submit',async(e)=>{
+            e.preventDefault();
+            const q=inp.value.trim(); if(!q||!doc.value.trim()) return;
+            append('user',q); history.push({role:'user',content:q}); inp.value='';
+            try{
+              const r=await fetch(API_BASE+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({doc_id:doc.value.trim(),messages:history})});
+              const data=await r.json();
+              const msg=(data.messages&&data.messages[0])?data.messages[0].content:'(no reply)';
+              append('assistant',msg); history.push({role:'assistant',content:msg});
+            }catch{append('assistant','(error)');}
+          });
+        })();
+        </script>
+      </body>
+    </html>"""
+    (site / "chat.html").write_text(chat_html)
 
     # Optional custom domain support: write CNAME if provided
     custom_domain = os.environ.get("PAGES_CUSTOM_DOMAIN")

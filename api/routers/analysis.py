@@ -16,6 +16,7 @@ from ..schemas import (
     ExtractStructureRequest,
     CitationRequest,
     QARequest,
+    ChatRequest,
 )
 from ..state import DOCS
 from ..utils import guess_citations, now_iso
@@ -308,3 +309,31 @@ def qa_answer(payload: QARequest):
         "coverage_gaps": ["Limited context for facts-in-issue", "No attachments parsed"],
     }
     return answer
+
+
+@router.post("/chat")
+def chat_answer(payload: ChatRequest):
+    doc_id = payload.doc_id
+    if not doc_id or doc_id not in DOCS:
+        raise HTTPException(404, "doc not found")
+    # Use last user message as the question
+    question = ""
+    for m in reversed(payload.messages or []):
+        if (m.role or "").lower() == "user":
+            question = m.content or ""
+            break
+    text = "\n\n".join(DOCS[doc_id].get("text_chunks", []))
+    cites = [c.model_dump() for c in guess_citations(text)]
+    # Minimal heuristic: echo intent and attach citations
+    answer_md = (
+        f"Q: {question}\n\n"
+        "Preliminary perspective based on current materials: consider the most directly applicable provisions and any procedural prerequisites. "
+        f"Attached {len(cites)} source reference(s) to ground follow‑up."
+    )
+    return {
+        "messages": [
+            {"role": "assistant", "content": answer_md},
+        ],
+        "citations": cites,
+        "confidence": 0.55,
+    }

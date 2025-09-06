@@ -101,3 +101,14 @@ class QARequest(BaseModel):
     doc_id: str
     question: str
     jurisdiction_hint: Optional[str] = None
+
+
+class ChatMessage(BaseModel):
+    role: str  # user | assistant | system
+    content: str
+
+
+class ChatRequest(BaseModel):
+    doc_id: str
+    messages: List[ChatMessage]
+    jurisdiction_hint: Optional[str] = None

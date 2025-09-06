@@ -53,6 +53,7 @@ help:
 	@echo "make format     # ruff --fix + black"
 	@echo "make typecheck  # mypy"
 	@echo "make run        # run app.py if present"
+	@echo "make run-local  # run uvicorn with EXPECT_API_KEY (default dev-key)"
 	@echo "make ci         # dev + lint + typecheck + test (non-interactive)"
 	@echo "make clean      # drop caches; keep .venv"
 	@echo "make clean-venv # remove .venv"
@@ -106,6 +107,22 @@ run: venv
 	else \
 		echo "No app.py found. Override 'run' target for your app entrypoint."; \
 	fi
+
+.PHONY: run-local
+run-local: venv ## run uvicorn locally with API key
+	@EXPECT_API_KEY=$${EXPECT_API_KEY:-dev-key} $(PYTHON) -m uvicorn app:app --reload --port 8000
+
+.PHONY: docker-build
+docker-build: ## build Docker image
+	docker build -t legal-api:local .
+
+.PHONY: docker-up
+docker-up: ## run Docker Compose (EXPECT_API_KEY honored)
+	EXPECT_API_KEY=$${EXPECT_API_KEY:-dev-key} docker compose up --build
+
+.PHONY: docker-down
+docker-down: ## stop Docker Compose
+	docker compose down
 
 .PHONY: ci
 ci:  ## mirror CI steps without installs
