@@ -60,15 +60,61 @@ def digest_text(parts: List[str]) -> str:
     return "sha256-" + h.hexdigest()
 
 
+ABBREV = {
+    # Common Victorian abbreviations → canonical title keys
+    "rsa 1986": "Road Safety Act 1986 (Vic)",
+    "evidence act 2008": "Evidence Act 2008 (Vic)",
+    "cpa 2009": "Criminal Procedure Act 2009 (Vic)",
+    "mccr 2019": "Magistrates’ Court Criminal Procedure Rules 2019 (Vic)",
+}
+
+
+NEUTRAL_CITE_RE = re.compile(
+    r"\[(?P<year>\d{4})\]\s+(?P<court>HCA|HCAFC|VSCA|VSC|VSCt|FCA|FCAFC|NSWCA|NSWSC|WASC|SASC|QCA|QSC|TASSC|ACTCA|ACTSC)\s+(?P<number>\d+)",
+    re.IGNORECASE,
+)
+
+
+def _slug(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
+
+
 def guess_citations(text: str) -> List[SourceRef]:
     refs: List[SourceRef] = []
+    low = text.lower()
+    # Statutes/Rules from CANON by full/partial match or abbreviation
     for title, uri in CANON.items():
-        if title.lower().split(" (vic)")[0] in text.lower():
-            sid = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
-            refs.append(SourceRef(source_id=sid, title=title, uri=uri, type="statute" if "Act" in title else "rule"))
-    pinpoints = re.findall(r"(s\s?\d+[A-Za-z0-9()/. -]*|r\s?\d+[A-Za-z0-9()/. -]*|cl\s?\d+[A-Za-z0-9()/. -]*|\[\d+\])", text)
+        key = title.lower().split(" (vic)")[0]
+        if key in low:
+            sid = _slug(title)
+            refs.append(
+                SourceRef(
+                    source_id=sid,
+                    title=title,
+                    uri=uri,
+                    type="statute" if "act" in title.lower() else "rule",
+                )
+            )
+    for abbr, full in ABBREV.items():
+        if abbr in low and full in CANON:
+            title = full
+            uri = CANON[full]
+            sid = _slug(title)
+            if not any(r.source_id == sid for r in refs):
+                refs.append(SourceRef(source_id=sid, title=title, uri=uri, type="statute"))
+    # Pinpoints for statute-like references
+    pinpoints = re.findall(
+        r"(s\s?\d+[A-Za-z0-9()/. -]*|r\s?\d+[A-Za-z0-9()/. -]*|cl\s?\d+[A-Za-z0-9()/. -]*|\[\d+\])",
+        text,
+    )
     if refs and pinpoints:
         r0 = refs[0]
         r0.pinpoint = pinpoints[0].strip()
         refs[0] = r0
+    # Neutral case citations → judgments
+    for m in NEUTRAL_CITE_RE.finditer(text):
+        court = m.group("court").upper()
+        ident = f"[{m.group('year')}] {court} {m.group('number')}"
+        sid = _slug(ident)
+        refs.append(SourceRef(source_id=sid, title=ident, type="judgment"))
     return refs

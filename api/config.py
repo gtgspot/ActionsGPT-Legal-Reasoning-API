@@ -1,4 +1,6 @@
 from typing import Dict
+import json
+from pathlib import Path
 
 # ---------- Configuration ----------
 ALLOWED_DOMAINS = {
@@ -21,8 +23,7 @@ USER_AGENT = "ActionsGPT-Legal/1.0 (+https://example.org)"
 # Max characters to keep from fetched/parsed content
 MAX_TEXT_CHARS = 200_000
 
-# Known statute → canonical URI (extend as needed)
-CANON: Dict[str, str] = {
+CANON_DEFAULT: Dict[str, str] = {
     "Road Safety Act 1986 (Vic)": "https://www.legislation.vic.gov.au/in-force/acts/road-safety-act-1986",
     "Evidence Act 2008 (Vic)": "https://www.legislation.vic.gov.au/in-force/acts/evidence-act-2008",
     "Magistrates’ Court Criminal Procedure Rules 2019 (Vic)": "https://www.legislation.vic.gov.au/in-force/statutory-rules/magistrates-court-criminal-procedure-rules-2019",
@@ -47,3 +48,20 @@ CANON: Dict[str, str] = {
     # Frequently cited but not in the earlier list
     "Criminal Procedure Act 2009 (Vic)": "https://www.legislation.vic.gov.au/in-force/acts/criminal-procedure-act-2009",
 }
+
+# Load external canon (if present), merge over defaults
+def _load_canon() -> Dict[str, str]:
+    data_path = Path(__file__).resolve().parents[1] / "data" / "canon.json"
+    canon = dict(CANON_DEFAULT)
+    try:
+        if data_path.exists():
+            with data_path.open("r", encoding="utf-8") as f:
+                ext = json.load(f)
+                if isinstance(ext, dict):
+                    canon.update({str(k): str(v) for k, v in ext.items()})
+    except Exception:
+        # Fall back silently if file malformed
+        pass
+    return canon
+
+CANON: Dict[str, str] = _load_canon()
