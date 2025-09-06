@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 
 from ..config import CANON
 from ..schemas import DraftDisclosureRequest
@@ -8,7 +8,7 @@ from ..security import api_key_guard
 from ..state import DOCS
 
 
-router = APIRouter(dependencies=[api_key_guard])
+router = APIRouter(dependencies=[Depends(api_key_guard)])
 
 
 @router.post("/drafts/disclosure-request")

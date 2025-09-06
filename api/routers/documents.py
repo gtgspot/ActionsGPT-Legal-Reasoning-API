@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Header, HTTPException, status, Query
+from fastapi import APIRouter, Header, HTTPException, status, Query, Depends
 
 from ..config import CANON
 from ..integrations.http import fetch_url
@@ -11,7 +11,7 @@ from ..utils import digest_text, now_iso
 from ..security import api_key_guard
 
 
-router = APIRouter(dependencies=[api_key_guard])
+router = APIRouter(dependencies=[Depends(api_key_guard)])
 
 
 @router.post("/documents/ingest", response_model=DocumentIngestResponse, status_code=status.HTTP_202_ACCEPTED)

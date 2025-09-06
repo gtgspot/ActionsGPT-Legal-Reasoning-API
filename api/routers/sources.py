@@ -4,7 +4,7 @@ from urllib.parse import quote_plus, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Depends
 
 from ..config import ALLOWED_DOMAINS, USER_AGENT
 from ..integrations.http import fetch_url
@@ -13,7 +13,7 @@ from ..utils import now_iso
 from ..security import api_key_guard
 
 
-router = APIRouter(dependencies=[api_key_guard])
+router = APIRouter(dependencies=[Depends(api_key_guard)])
 
 
 @router.post("/sources/search")

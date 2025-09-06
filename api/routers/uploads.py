@@ -1,11 +1,11 @@
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, UploadFile, status
+from fastapi import APIRouter, File, Form, UploadFile, status, Depends
 from ..security import api_key_guard
 
 
-router = APIRouter(dependencies=[api_key_guard])
+router = APIRouter(dependencies=[Depends(api_key_guard)])
 
 
 @router.post("/upload", status_code=status.HTTP_201_CREATED)

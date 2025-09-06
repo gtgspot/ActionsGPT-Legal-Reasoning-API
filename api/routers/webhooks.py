@@ -1,10 +1,10 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from ..utils import now_iso
 from ..security import api_key_guard
 
 
-router = APIRouter(dependencies=[api_key_guard])
+router = APIRouter(dependencies=[Depends(api_key_guard)])
 
 
 @router.post("/webhooks/ingest-complete")

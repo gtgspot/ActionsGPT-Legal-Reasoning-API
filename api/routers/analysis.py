@@ -5,7 +5,7 @@ from urllib.parse import quote_plus
 
 import httpx
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 
 from ..config import CANON, USER_AGENT
 from ..schemas import (
@@ -23,7 +23,7 @@ from ..utils import guess_citations, now_iso
 from ..security import api_key_guard
 
 
-router = APIRouter(dependencies=[api_key_guard])
+router = APIRouter(dependencies=[Depends(api_key_guard)])
 
 
 @router.post("/extract/structure")
