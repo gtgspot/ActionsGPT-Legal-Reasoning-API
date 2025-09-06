@@ -22,6 +22,7 @@ def main() -> None:
     primary = os.environ.get("PAGES_PRIMARY_COLOR", "#1f6feb")
     accent = os.environ.get("PAGES_ACCENT_COLOR", "#0969da")
     title = os.environ.get("PAGES_SITE_TITLE", "ActionsGPT — Legal Reasoning API")
+    api_base = os.environ.get("PAGES_API_BASE", "")
 
     css = f""":root {{
   --brand-primary: {primary};
@@ -36,6 +37,7 @@ def main() -> None:
 * {{ box-sizing: border-box; }}
 html, body {{ height: 100%; margin: 0; }}
 body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); }}
+.container {{ max-width: 1200px; margin: 0 auto; padding: 0 18px; }}
 .header {{ display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); background: #0d1117; position: sticky; top: 0; z-index: 5; }}
 .brand {{ font-weight: 600; letter-spacing: 0.2px; }}
 .brand a {{ color: var(--text); text-decoration: none; }}
@@ -45,7 +47,19 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
 .btn:hover {{ filter: brightness(1.05); }}
 .layout {{ display: grid; grid-template-rows: auto 1fr; min-height: 100vh; }}
 .content {{ display: grid; grid-template-columns: 1fr; }}
-.hero {{ padding: 18px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(31,111,235,0.10), transparent 60%); }}
+.hero {{ padding: 48px 18px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(31,111,235,0.10), transparent 60%); }}
+.hero h1 {{ margin: 0 0 12px 0; font-size: 28px; }}
+.hero p {{ margin: 0; color: var(--muted); max-width: 70ch; }}
+.grid {{ display: grid; gap: 14px; grid-template-columns: 1fr; padding: 18px; }}
+@media (min-width: 900px) {{ .grid {{ grid-template-columns: repeat(3, 1fr); }} }}
+.card {{ background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }}
+.card h3 {{ margin: 0 0 6px; font-size: 16px; }}
+.muted {{ color: var(--muted); }}
+.input {{ width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #0d1117; color: var(--text); }}
+.list {{ display: grid; gap: 10px; margin-top: 14px; }}
+.item {{ border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #0d1117; }}
+.item a {{ color: var(--brand-primary); text-decoration: none; }}
+.item .tag {{ font-size: 12px; color: var(--muted); }}
 .links a {{ color: var(--brand-primary); text-decoration: none; }}
 .links a:hover {{ text-decoration: underline; }}
 .api {{ height: calc(100vh - 120px); }}
@@ -53,8 +67,94 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
 """
     (assets / "styles.css").write_text(css)
 
-    # Enhanced ReDoc page with header and quick links
-    html = f"""<!doctype html>
+    # Runtime config
+    config_js = f"window.__CONFIG__ = {{ apiBase: '{api_base}' }};"
+    (assets / "config.js").write_text(config_js)
+
+    # App JS
+    app_js = """
+(() => {
+  const API_BASE = (window.__CONFIG__ && window.__CONFIG__.apiBase) || '';
+  const api = (p, opts={}) => fetch((API_BASE||'') + p, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts));
+
+  async function searchSources(q) {
+    const r = await api('/sources/search', { method:'POST', body: JSON.stringify({ query:q, limit: 20 }) });
+    return await r.json();
+  }
+
+  async function loadMap() {
+    const r = await api('/map/legislation', { method:'POST', body: JSON.stringify({ doc_id: 'preview' })});
+    return await r.json();
+  }
+
+  function h(tag, attrs={}, ...children){
+    const el = document.createElement(tag);
+    for (const [k,v] of Object.entries(attrs||{})) {
+      if (k === 'class') el.className = v; else if (k==='html') el.innerHTML = v; else el.setAttribute(k,v);
+    }
+    children.forEach(c => { if (c==null) return; el.appendChild(typeof c==='string'?document.createTextNode(c):c); });
+    return el;
+  }
+
+  function renderList(container, items){
+    container.innerHTML='';
+    if (!items || !items.results || !items.results.length) { container.appendChild(h('div',{class:'muted'},'No results')); return; }
+    const list = h('div',{class:'list'});
+    for (const it of items.results){
+      const row = h('div',{class:'item'},
+        h('div',{}, h('a',{href:it.uri, target:'_blank', rel:'noopener'}, it.title || it.uri)),
+        h('div',{class:'tag'}, `${it.type||'other'} • score ${it.score??''}`)
+      );
+      list.appendChild(row);
+    }
+    container.appendChild(list);
+  }
+
+  function initExplorer(){
+    const form = document.querySelector('#explorer-form');
+    const input = document.querySelector('#explorer-input');
+    const out = document.querySelector('#explorer-out');
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      out.innerHTML = '<div class="muted">Searching…</div>';
+      try { const data = await searchSources(input.value.trim()); renderList(out, data); }
+      catch (err) { out.innerHTML = '<div class="muted">Error performing search.</div>'; }
+    });
+  }
+
+  async function initMap(){
+    const container = document.getElementById('graph');
+    if (!container) return;
+    try {
+      const data = await loadMap();
+      const cy = window.cytoscape({
+        container,
+        boxSelectionEnabled: false,
+        style: [
+          { selector: 'node', style: { 'label': 'data(title)', 'background-color': 'var(--brand-primary)', 'color':'#fff', 'text-valign':'center', 'text-halign':'center', 'font-size':'10px', 'width': 'label', 'height':'label', 'padding':'8px', 'shape':'round-rectangle' } },
+          { selector: 'edge', style: { 'curve-style':'bezier', 'target-arrow-shape':'triangle', 'line-color':'#6ea8fe55', 'target-arrow-color':'#6ea8fe55' } }
+        ],
+        elements: {
+          nodes: (data.nodes||[]).map(n => ({ data: n })),
+          edges: (data.edges||[]).map(e => ({ data: { id: `${e.from}->${e.to}`, source: e.from, target: e.to } }))
+        },
+        layout: { name: 'cose', animate: false }
+      });
+    } catch (e) {
+      container.innerHTML = '<div class="muted">Failed to load graph.</div>';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initExplorer();
+    initMap();
+  });
+})();
+"""
+    (assets / "app.js").write_text(app_js)
+
+    # Landing page
+    landing = f"""<!doctype html>
     <html lang=\"en\">
       <head>
         <meta charset=\"utf-8\" />
@@ -62,35 +162,119 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
         <title>{title}</title>
         <link rel=\"icon\" href=\"data:,\" />
         <link rel=\"stylesheet\" href=\"assets/styles.css\" />
+        <script defer src=\"assets/config.js\"></script>
+        <script defer src=\"assets/app.js\"></script>
       </head>
       <body>
         <div class=\"layout\">
           <header class=\"header\">
             <div class=\"brand\"><a href=\"./\">{title}</a></div>
             <nav class=\"btns\">
-              <a class=\"btn\" href=\"openapi.json\" target=\"_blank\" rel=\"noopener\">OpenAPI JSON</a>
-              <a class=\"btn primary\" href=\"#\" onclick=\"document.querySelector('redoc').scrollIntoView({{behavior:'smooth'}});return false;\">View API</a>
+              <a class=\"btn\" href=\"api.html\">API Docs</a>
+              <a class=\"btn\" href=\"explorer.html\">Explorer</a>
+              <a class=\"btn primary\" href=\"map.html\">Citations Map</a>
             </nav>
           </header>
           <section class=\"hero\">
-            <div class=\"links\">Fast, typed FastAPI endpoints for legal ingestion and lightweight research. Explore the API below or fetch the <a href=\"openapi.json\">OpenAPI schema</a>.</div>
+            <div class=\"container\">
+              <h1>Next‑Gen Legal Reasoning Interface</h1>
+              <p>Minimal, readable, and fast. Backed by a citation‑aware memory core designed for verifiability and iterative analysis. Explore sources, map legislation, and integrate via OpenAPI.</p>
+            </div>
           </section>
-          <section class=\"content\">
-            <redoc spec-url=\"openapi.json\" class=\"api\"></redoc>
+          <section class=\"container\" style=\"padding:18px\">
+            <div class=\"grid\">
+              <div class=\"card\">
+                <h3>Structured Retrieval</h3>
+                <div class=\"muted\">Key‑less meta‑search across allowlisted legal sources with graceful fallbacks.</div>
+              </div>
+              <div class=\"card\">
+                <h3>Citation Mapping</h3>
+                <div class=\"muted\">Visualize Acts, Regulations, and Rules with directional relations.</div>
+              </div>
+              <div class=\"card\">
+                <h3>Typed Contracts</h3>
+                <div class=\"muted\">Strongly‑typed requests and responses for predictable integrations.</div>
+              </div>
+            </div>
           </section>
         </div>
-
-        <script src=\"https://cdn.jsdelivr.net/npm/redoc/bundles/redoc.standalone.js\"></script>
       </body>
     </html>"""
-    (site / "index.html").write_text(html)
+    (site / "index.html").write_text(landing)
+
+    # Explorer page
+    explorer = f"""<!doctype html>
+    <html lang=\"en\">
+      <head>
+        <meta charset=\"utf-8\" />
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+        <title>{title} — Explorer</title>
+        <link rel=\"stylesheet\" href=\"assets/styles.css\" />
+        <script defer src=\"assets/config.js\"></script>
+        <script defer src=\"assets/app.js\"></script>
+      </head>
+      <body>
+        <div class=\"layout\">
+          <header class=\"header\">
+            <div class=\"brand\"><a href=\"./\">{title}</a></div>
+            <nav class=\"btns\">
+              <a class=\"btn\" href=\"api.html\">API Docs</a>
+              <a class=\"btn primary\" href=\"explorer.html\">Explorer</a>
+              <a class=\"btn\" href=\"map.html\">Citations Map</a>
+            </nav>
+          </header>
+          <section class=\"container\" style=\"padding:18px\">
+            <form id=\"explorer-form\"> 
+              <input id=\"explorer-input\" class=\"input\" placeholder=\"Search e.g. Evidence Act s 138\" />
+            </form>
+            <div id=\"explorer-out\" style=\"margin-top: 10px;\"></div>
+          </section>
+        </div>
+      </body>
+    </html>"""
+    (site / "explorer.html").write_text(explorer)
+
+    # Map page
+    map_page = f"""<!doctype html>
+    <html lang=\"en\">
+      <head>
+        <meta charset=\"utf-8\" />
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+        <title>{title} — Citations Map</title>
+        <link rel=\"stylesheet\" href=\"assets/styles.css\" />
+        <script defer src=\"assets/config.js\"></script>
+        <script defer src=\"assets/app.js\"></script>
+        <script src=\"https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.umd.min.js\"></script>
+      </head>
+      <body>
+        <div class=\"layout\">
+          <header class=\"header\">
+            <div class=\"brand\"><a href=\"./\">{title}</a></div>
+            <nav class=\"btns\">
+              <a class=\"btn\" href=\"api.html\">API Docs</a>
+              <a class=\"btn\" href=\"explorer.html\">Explorer</a>
+              <a class=\"btn primary\" href=\"map.html\">Citations Map</a>
+            </nav>
+          </header>
+          <section class=\"container\" style=\"padding:12px\">
+            <div id=\"graph\" style=\"height: calc(100vh - 120px); border:1px solid var(--border); border-radius: 12px; background:#0d1117;\"></div>
+          </section>
+        </div>
+      </body>
+    </html>"""
+    (site / "map.html").write_text(map_page)
+
+    # API docs page (ReDoc)
+    api_html = f"""<!doctype html>
+    <html lang=\"en\">\n      <head>\n        <meta charset=\"utf-8\" />\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n        <title>{title} — API</title>\n        <link rel=\"icon\" href=\"data:,\" />\n        <link rel=\"stylesheet\" href=\"assets/styles.css\" />\n      </head>\n      <body>\n        <div class=\"layout\">\n          <header class=\"header\">\n            <div class=\"brand\"><a href=\"./\">{title}</a></div>\n            <nav class=\"btns\">\n              <a class=\"btn primary\" href=\"api.html\">API Docs</a>\n              <a class=\"btn\" href=\"explorer.html\">Explorer</a>\n              <a class=\"btn\" href=\"map.html\">Citations Map</a>\n            </nav>\n          </header>\n          <section class=\"content\">\n            <redoc spec-url=\"openapi.json\" class=\"api\"></redoc>\n          </section>\n        </div>\n\n        <script src=\"https://cdn.jsdelivr.net/npm/redoc/bundles/redoc.standalone.js\"></script>\n      </body>\n    </html>"""
+    (site / "api.html").write_text(api_html)
 
     # Optional custom domain support: write CNAME if provided
     custom_domain = os.environ.get("PAGES_CUSTOM_DOMAIN")
     if custom_domain:
         (site / "CNAME").write_text(custom_domain.strip() + "\n")
 
-    print("Wrote site/openapi.json and site/index.html")
+    print("Wrote site with landing, explorer, map, api docs")
 
 
 if __name__ == "__main__":

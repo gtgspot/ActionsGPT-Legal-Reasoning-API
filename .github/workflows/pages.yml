@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PAGES_CUSTOM_DOMAIN: ${{ vars.PAGES_CUSTOM_DOMAIN }}
+      PAGES_API_BASE: ${{ vars.PAGES_API_BASE }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
