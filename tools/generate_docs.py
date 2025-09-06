@@ -49,7 +49,7 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
 .btn {{ appearance: none; border: 1px solid var(--border); background: var(--panel); color: var(--text); padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: transform .08s ease, filter .15s ease; }}
 .btn.primary {{ background: var(--brand-primary); border-color: var(--brand-primary); color: white; }}
 .btn:hover {{ filter: brightness(1.08); transform: translateY(-1px); }}
-.btn:active { transform: translateY(0); }
+.btn:active {{ transform: translateY(0); }}
 .layout {{ display: grid; grid-template-rows: auto 1fr; min-height: 100vh; }}
 .content {{ display: grid; grid-template-columns: 1fr; }}
 .hero {{ padding: 48px 18px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(31,111,235,0.10), transparent 60%); }}
