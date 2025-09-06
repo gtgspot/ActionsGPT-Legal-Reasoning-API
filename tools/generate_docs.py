@@ -32,9 +32,13 @@ def main() -> None:
     </html>"""
     (site / "index.html").write_text(html)
 
+    # Optional custom domain support: write CNAME if provided
+    custom_domain = os.environ.get("PAGES_CUSTOM_DOMAIN")
+    if custom_domain:
+        (site / "CNAME").write_text(custom_domain.strip() + "\n")
+
     print("Wrote site/openapi.json and site/index.html")
 
 
 if __name__ == "__main__":
     main()
-
