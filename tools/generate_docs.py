@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 import json
 import os
+import sys
 from pathlib import Path
 
 
 def main() -> None:
-    # Import app after path setup
+    # Ensure repo root on sys.path for 'import app'
+    repo_root = Path(__file__).resolve().parents[1]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
     from app import app  # type: ignore
 
     site = Path("site")
