@@ -66,6 +66,15 @@ ABBREV = {
     "evidence act 2008": "Evidence Act 2008 (Vic)",
     "cpa 2009": "Criminal Procedure Act 2009 (Vic)",
     "mccr 2019": "Magistrates’ Court Criminal Procedure Rules 2019 (Vic)",
+    "soa 1966": "Summary Offences Act 1966 (Vic)",
+    "ba 1977": "Bail Act 1977 (Vic)",
+    "sa 1991": "Sentencing Act 1991 (Vic)",
+    "fvpa 2008": "Family Violence Protection Act 2008 (Vic)",
+    "cc 1995": "Criminal Code Act 1995 (Cth)",
+    "cca 1995": "Criminal Code Act 1995 (Cth)",
+    "cca 1914": "Crimes Act 1914 (Cth)",
+    "sc gcp rules 2015": "Supreme Court (General Civil Procedure) Rules 2015 (Vic)",
+    "cpr 2020": "Criminal Procedure Regulations 2020 (Vic)",
 }
 
 
