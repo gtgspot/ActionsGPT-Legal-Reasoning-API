@@ -62,7 +62,11 @@ venv:
 	$(call ensure_venv)
 
 .PHONY: dev
-dev: venv
+dev: venv  ## create .venv only; no installs
+	@echo ">> .venv ready (no installs). Activate with: source $(VENV_DIR)/bin/activate"
+
+.PHONY: bootstrap
+bootstrap: venv  ## create .venv and install project + tools
 	$(call install_requirements)
 	$(call install_tools)
 	@mkdir -p ~/.config/pip
@@ -104,8 +108,13 @@ run: venv
 	fi
 
 .PHONY: ci
-ci:
-	@$(MAKE) dev
+ci:  ## mirror CI steps without installs
+	@$(MAKE) lint
+	@$(MAKE) typecheck
+	@$(MAKE) test
+
+.PHONY: check
+check:  ## ruff + black --check + mypy + pytest
 	@$(MAKE) lint
 	@$(MAKE) typecheck
 	@$(MAKE) test

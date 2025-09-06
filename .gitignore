@@ -40,3 +40,7 @@ env/
 .env.development.local
 .env.test.local
 .env.production.local
+.venv/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
