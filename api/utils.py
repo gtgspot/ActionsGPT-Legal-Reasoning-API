@@ -75,6 +75,26 @@ NEUTRAL_CITE_RE = re.compile(
 )
 
 
+NEUTRAL_COURT_MAP = {
+    # code: (jurisdiction path code, court folder)
+    "HCA": ("cth", "HCA"),
+    "HCAFC": ("cth", "HCAFC"),
+    "FCA": ("cth", "FCA"),
+    "FCAFC": ("cth", "FCAFC"),
+    "VSCA": ("vic", "VSCA"),
+    "VSC": ("vic", "VSC"),
+    "NSWCA": ("nsw", "NSWCA"),
+    "NSWSC": ("nsw", "NSWSC"),
+    "QCA": ("qld", "QCA"),
+    "QSC": ("qld", "QSC"),
+    "WASC": ("wa", "WASC"),
+    "SASC": ("sa", "SASC"),
+    "TASSC": ("tas", "TASSC"),
+    "ACTCA": ("act", "ACTCA"),
+    "ACTSC": ("act", "ACTSC"),
+}
+
+
 def _slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 
@@ -114,7 +134,13 @@ def guess_citations(text: str) -> List[SourceRef]:
     # Neutral case citations → judgments
     for m in NEUTRAL_CITE_RE.finditer(text):
         court = m.group("court").upper()
-        ident = f"[{m.group('year')}] {court} {m.group('number')}"
+        year = m.group("year")
+        num = m.group("number")
+        ident = f"[{year}] {court} {num}"
         sid = _slug(ident)
-        refs.append(SourceRef(source_id=sid, title=ident, type="judgment"))
+        uri: Optional[str] = None
+        if court in NEUTRAL_COURT_MAP:
+            jur, folder = NEUTRAL_COURT_MAP[court]
+            uri = f"https://www8.austlii.edu.au/cgi-bin/viewdoc/au/cases/{jur}/{folder}/{year}/{num}.html"
+        refs.append(SourceRef(source_id=sid, title=ident, type="judgment", uri=uri))
     return refs
