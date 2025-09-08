@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends
 
-from ..config import reload_canon, CANON
+from ..config import reload_canon
 from ..security import api_key_guard
-
 
 router = APIRouter(prefix="/_admin", tags=["admin"], dependencies=[Depends(api_key_guard)])
 

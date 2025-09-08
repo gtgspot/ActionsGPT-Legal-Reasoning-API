@@ -1,12 +1,12 @@
 import unittest
 
+from api.utils import digest_text, domain_allowed, guess_citations, html_to_text, now_iso
+
 try:
-    import bs4  # type: ignore
+    import bs4  # noqa: F401
     HAS_BS4 = True
 except Exception:
     HAS_BS4 = False
-
-from api.utils import now_iso, domain_allowed, html_to_text, digest_text, guess_citations
 
 
 class UtilsTests(unittest.TestCase):

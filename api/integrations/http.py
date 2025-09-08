@@ -1,10 +1,10 @@
 from typing import Any, Dict, Optional
 
 import httpx
+from fastapi import HTTPException
 
 from ..config import MAX_TEXT_CHARS, USER_AGENT
 from ..utils import domain_allowed, html_to_text, now_iso
-from fastapi import HTTPException
 
 
 def default_headers(auth_header: Optional[str] = None) -> Dict[str, str]:
@@ -37,3 +37,14 @@ async def fetch_url(url: str, auth_header: Optional[str]) -> Dict[str, Any]:
             "detected_type": detected,
             "captured_at": now_iso(),
         }
+
+
+def get_async_client(headers: Optional[Dict[str, str]] = None) -> httpx.AsyncClient:
+    """Factory for AsyncClient with consistent defaults.
+
+    Centralizes timeouts, follow redirects, and user-agent.
+    """
+    base_headers = {"User-Agent": USER_AGENT}
+    if headers:
+        base_headers.update(headers)
+    return httpx.AsyncClient(timeout=30, follow_redirects=True, headers=base_headers)

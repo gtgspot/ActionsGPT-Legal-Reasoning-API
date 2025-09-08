@@ -1,9 +1,9 @@
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, UploadFile, status, Depends
-from ..security import api_key_guard
+from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 
+from ..security import api_key_guard
 
 router = APIRouter(dependencies=[Depends(api_key_guard)])
 

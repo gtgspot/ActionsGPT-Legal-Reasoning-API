@@ -1,10 +1,10 @@
 import uuid
+
 from fastapi.testclient import TestClient
 
-from app import app
 from api.state import DOCS
 from api.utils import now_iso
-
+from app import app
 
 client = TestClient(app, headers={"X-API-Key": "test-key"})
 
@@ -24,4 +24,3 @@ def test_recent_documents_lists_created():
     assert r.status_code == 200
     data = r.json()
     assert "items" in data and len(data["items"]) >= 2
-

@@ -2,16 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from api.routers.health import router as health_router
-from api.routers.documents import router as documents_router
-from api.routers.sources import router as sources_router
+from api.routers.admin import router as admin_router
 from api.routers.analysis import router as analysis_router
+from api.routers.canon import router as canon_router
+from api.routers.documents import router as documents_router
 from api.routers.drafts import router as drafts_router
+from api.routers.health import router as health_router
+from api.routers.sources import router as sources_router
 from api.routers.uploads import router as uploads_router
 from api.routers.webhooks import router as webhooks_router
-from api.routers.canon import router as canon_router
-from api.routers.admin import router as admin_router
-
 
 app = FastAPI(
     title="ActionsGPT — Legal Reasoning API",

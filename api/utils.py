@@ -1,38 +1,20 @@
 import datetime
 import hashlib
 import re
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from urllib.parse import urlparse
 
 try:
-    from bs4 import BeautifulSoup  # type: ignore
+    from bs4 import BeautifulSoup
 except Exception:  # pragma: no cover - optional dep
-    BeautifulSoup = None  # type: ignore
+    BeautifulSoup = None
 
 from .config import ALLOWED_DOMAINS, CANON
-try:
-    from .schemas import SourceRef  # type: ignore
-except Exception:  # pragma: no cover - optional dep fallback
-    from dataclasses import dataclass
-
-    @dataclass
-    class SourceRef:  # type: ignore
-        source_id: str
-        title: str
-        uri: Optional[str] = None
-        jurisdiction: Optional[str] = None
-        type: Optional[str] = None
-        date: Optional[str] = None
-        pinpoint: Optional[str] = None
-        quote_range: Optional[str] = None
-        reliability_score: float = 0.9
-
-        def model_dump(self):
-            return self.__dict__
+from .schemas import SourceRef
 
 
 def now_iso() -> str:
-    return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    return datetime.datetime.now(datetime.UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def domain_allowed(url: str) -> bool:
@@ -147,9 +129,9 @@ def guess_citations(text: str) -> List[SourceRef]:
         num = m.group("number")
         ident = f"[{year}] {court} {num}"
         sid = _slug(ident)
-        uri: Optional[str] = None
+        doc_uri: Optional[str] = None
         if court in NEUTRAL_COURT_MAP:
             jur, folder = NEUTRAL_COURT_MAP[court]
-            uri = f"https://www8.austlii.edu.au/cgi-bin/viewdoc/au/cases/{jur}/{folder}/{year}/{num}.html"
-        refs.append(SourceRef(source_id=sid, title=ident, type="judgment", uri=uri))
+            doc_uri = f"https://www8.austlii.edu.au/cgi-bin/viewdoc/au/cases/{jur}/{folder}/{year}/{num}.html"
+        refs.append(SourceRef(source_id=sid, title=ident, type="judgment", uri=doc_uri))
     return refs

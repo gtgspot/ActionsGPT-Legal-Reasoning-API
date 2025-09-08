@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
 
-from ..utils import now_iso
+from ..schemas import WebhookAckResponse, WebhookIngestEvent
 from ..security import api_key_guard
-
+from ..utils import now_iso
 
 router = APIRouter(dependencies=[Depends(api_key_guard)])
 
 
-@router.post("/webhooks/ingest-complete")
-def ingest_complete(payload: dict):
-    return {"ok": True, "received": payload, "ts": now_iso()}
+@router.post("/webhooks/ingest-complete", response_model=WebhookAckResponse)
+def ingest_complete(payload: WebhookIngestEvent) -> WebhookAckResponse:
+    return WebhookAckResponse(ok=True, received=payload.model_dump(), ts=now_iso())

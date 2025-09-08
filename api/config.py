@@ -1,6 +1,6 @@
-from typing import Dict
 import json
 from pathlib import Path
+from typing import Dict
 
 # ---------- Configuration ----------
 ALLOWED_DOMAINS = {
@@ -11,6 +11,16 @@ ALLOWED_DOMAINS = {
     "mcv.vic.gov.au",
     "legislation.gov.au",
     "www.legislation.gov.au",
+    # Other Australian jurisdictions — in-force legislation portals
+    "www.legislation.nsw.gov.au",
+    "legislation.nsw.gov.au",
+    "www.legislation.qld.gov.au",
+    "legislation.qld.gov.au",
+    "www.legislation.wa.gov.au",
+    "www.legislation.sa.gov.au",
+    "www.legislation.tas.gov.au",
+    "www.legislation.act.gov.au",
+    "legislation.nt.gov.au",
     "legis.com.au",
     "www.legis.com.au",
     "b2find.eudat.eu",
@@ -22,6 +32,32 @@ USER_AGENT = "ActionsGPT-Legal/1.0 (+https://example.org)"
 
 # Max characters to keep from fetched/parsed content
 MAX_TEXT_CHARS = 200_000
+
+# Document store bounds
+DOCS_MAX_ITEMS = 1000
+DOCS_TTL_SECONDS = 24 * 60 * 60  # 24 hours
+DOCS_MAX_CHUNKS_PER_DOC = 100
+DOCS_MAX_BYTES_PER_DOC = 2_000_000
+
+# Precedent ranking weights (tunable)
+PRECEDENT_WEIGHTS = {
+    "w_binding": 0.35,
+    "w_court": 0.25,
+    "w_ratio": 0.10,
+    "w_unanimity": 0.05,
+    "w_treatment": 0.15,
+    "w_jurisdiction": 0.05,
+    "w_age": 0.05,
+    "contrary_penalty": 0.50,
+    "age_lambda": 0.05,  # exp(-lambda * years)
+    "treatment_cap": 0.20,  # abs cap for treatment delta
+}
+
+# Provider throttling defaults (can be overridden per provider in providers.yml)
+THROTTLE_DEFAULT = {
+    "min_delay_ms": 0,
+    "max_inflight": 4,
+}
 
 CANON_DEFAULT: Dict[str, str] = {
     "Road Safety Act 1986 (Vic)": "https://www.legislation.vic.gov.au/in-force/acts/road-safety-act-1986",

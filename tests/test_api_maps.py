@@ -1,10 +1,10 @@
 import uuid
+
 from fastapi.testclient import TestClient
 
-from app import app
 from api.state import DOCS
 from api.utils import now_iso
-
+from app import app
 
 client = TestClient(app, headers={"X-API-Key": "test-key"})
 

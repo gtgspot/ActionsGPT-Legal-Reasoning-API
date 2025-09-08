@@ -1,0 +1,20 @@
+version: 1
+courts:
+  HCA:  { level: 5, binding_on_vic: true }
+  VSCA: { level: 4, binding_on_vic: true }
+  VSC:  { level: 3, binding_on_vic: false }
+  VCC:  { level: 2, binding_on_vic: false }
+  MCV:  { level: 1, binding_on_vic: false }
+  VCAT: { level: 1, binding_on_vic: false }
+  FCA:  { level: 3, binding_on_vic: false }
+  FCAFC:{ level: 4, binding_on_vic: false }
+rules:
+  - if: { court: HCA }              then: { binding_on_vic: true }
+  - if: { court: VSCA }             then: { binding_on_vic: true }
+  - if: { court: VSC }              then: { binding_lower: [VCC, MCV, VCAT] }
+  - if: { court: FCA|FCAFC }        then: { persuasive_in_vic: true }
+comity:
+  follow_other_coa_unless_plainly_wrong: true
+dicta:
+  hca_seriously_considered_dicta_weight: 0.8
+

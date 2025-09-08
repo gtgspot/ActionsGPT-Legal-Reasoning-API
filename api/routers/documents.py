@@ -1,15 +1,19 @@
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-from fastapi import APIRouter, Header, HTTPException, status, Query, Depends
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 
-from ..config import CANON
+from ..config import DOCS_MAX_BYTES_PER_DOC, DOCS_MAX_CHUNKS_PER_DOC
 from ..integrations.http import fetch_url
-from ..schemas import DocumentIngestRequest, DocumentIngestResponse
-from ..state import DOCS
-from ..utils import digest_text, now_iso
+from ..schemas import (
+    DocumentIngestRequest,
+    DocumentIngestResponse,
+    InputSubmitRequest,
+    InputSubmitResponse,
+)
 from ..security import api_key_guard
-
+from ..state import DOCS, prune_docs_store
+from ..utils import digest_text, now_iso
 
 router = APIRouter(dependencies=[Depends(api_key_guard)])
 
@@ -31,6 +35,7 @@ async def ingest(req: DocumentIngestRequest, authorization: Optional[str] = Head
         "created_at": now_iso(),
         "digest": digest_text(text_chunks),
     }
+    prune_docs_store(DOCS)
     return DocumentIngestResponse(doc_id=doc_id, status="ready")
 
 
@@ -41,17 +46,24 @@ def get_status(doc_id: str):
     return DocumentIngestResponse(doc_id=doc_id, status=DOCS[doc_id]["status"])
 
 
-@router.post("/input/submit")
-def submit_text(payload: Dict[str, Any]):
-    text = payload.get("text")
-    if not text or not isinstance(text, str):
-        raise HTTPException(400, "text is required")
-    doc_id = payload.get("doc_id") or str(uuid.uuid4())
+@router.post("/input/submit", response_model=InputSubmitResponse)
+def submit_text(payload: InputSubmitRequest) -> InputSubmitResponse:
+    text = payload.text
+    doc_id = payload.doc_id or str(uuid.uuid4())
     rec = DOCS.get(doc_id) or {"status": "ready", "text_chunks": [], "meta": {}, "created_at": now_iso()}
+    if len(rec.get("text_chunks", [])) >= DOCS_MAX_CHUNKS_PER_DOC:
+        raise HTTPException(status_code=413, detail="Too many chunks for this document")
+    total_bytes = sum(len(t.encode("utf-8", "ignore")) for t in rec.get("text_chunks", [])) + len(
+        text.encode("utf-8")
+    )
+    if total_bytes > DOCS_MAX_BYTES_PER_DOC:
+        raise HTTPException(status_code=413, detail="Document size limit exceeded")
+
     rec["text_chunks"].append(text)
     rec["digest"] = digest_text(rec["text_chunks"])
     DOCS[doc_id] = rec
-    return {"doc_id": doc_id, "accepted_bytes": len(text.encode("utf-8"))}
+    prune_docs_store(DOCS)
+    return InputSubmitResponse(doc_id=doc_id, accepted_bytes=len(text.encode("utf-8")))
 
 
 @router.get("/documents/recent")

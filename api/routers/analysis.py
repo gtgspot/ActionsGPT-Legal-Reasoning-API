@@ -1,27 +1,37 @@
 import hashlib
 import re
+from datetime import UTC, datetime
 from typing import Any, Dict, List
 from urllib.parse import quote_plus
 
-import httpx
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..config import CANON, USER_AGENT
+from ..integrations.http import get_async_client
 from ..schemas import (
     ArgumentsBuildRequest,
-    ComplianceCheckRequest,
-    PrecedentsSearchRequest,
-    SalienceScoreRequest,
-    ExtractStructureRequest,
-    CitationRequest,
-    QARequest,
     ChatRequest,
+    CitationRequest,
+    ComplianceCheckRequest,
+    ExtractStructureRequest,
+    MapEdge,
+    MapGraphResponse,
+    MapNode,
+    PrecedentsSearchRequest,
+    QARequest,
+    SalienceScoreRequest,
 )
-from ..state import DOCS
-from ..utils import guess_citations, now_iso
 from ..security import api_key_guard
-
+from ..services.precedent import (
+    build_authority_line,
+    compute_precedential_weight,
+    parse_case_page,
+    parse_neutral_citation,
+)
+from ..services.sources import get_provider_search_url, select_providers
+from ..state import DOCS
+from ..utils import guess_citations
 
 router = APIRouter(dependencies=[Depends(api_key_guard)])
 
@@ -56,8 +66,8 @@ def extract_structure(payload: ExtractStructureRequest):
     }
 
 
-@router.post("/map/legislation")
-def map_legislation(payload: Dict[str, Any]):
+@router.post("/map/legislation", response_model=MapGraphResponse)
+def map_legislation(payload: Dict[str, Any]) -> MapGraphResponse:
     doc_id = payload.get("doc_id")
     if not doc_id or doc_id not in DOCS:
         raise HTTPException(404, "doc not found")
@@ -99,11 +109,12 @@ def map_legislation(payload: Dict[str, Any]):
             "provenance": {"doc_id": doc_id, "snippet": snippet},
             "time": rec.get("created_at"),
         })
-    return {"nodes": nodes, "edges": edges}
+    # Pydantic models will validate structure
+    return MapGraphResponse(nodes=[MapNode(**n) for n in nodes], edges=[MapEdge(**e) for e in edges])
 
 
-@router.get("/map/citations/{doc_id}")
-def map_citations(doc_id: str):
+@router.get("/map/citations/{doc_id}", response_model=MapGraphResponse)
+def map_citations(doc_id: str) -> MapGraphResponse:
     if not doc_id or doc_id not in DOCS:
         raise HTTPException(404, "doc not found")
     rec = DOCS[doc_id]
@@ -135,7 +146,7 @@ def map_citations(doc_id: str):
             "provenance": {"doc_id": doc_id},
             "time": rec.get("created_at"),
         })
-    return {"nodes": nodes, "edges": edges}
+    return MapGraphResponse(nodes=[MapNode(**n) for n in nodes], edges=[MapEdge(**e) for e in edges])
 
 
 @router.post("/cite/aglc4")
@@ -166,8 +177,19 @@ async def precedents_search(payload: PrecedentsSearchRequest):
     if not q:
         raise HTTPException(400, "query is required")
     try:
-        url = f"https://www8.austlii.edu.au/cgi-bin/sinosrch.cgi?query={quote_plus(q)}&mask_path=au/cases/vic&results=20"
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30, headers={"User-Agent": USER_AGENT}) as c:
+        order = select_providers(payload.jurisdiction_hint)
+        url = None
+        for pid in order:
+            url = get_provider_search_url(pid, q)
+            if url:
+                break
+        if not url:
+            mask = "au/cases/vic"
+            j = (payload.jurisdiction_hint or "VIC").upper()
+            if j == "CTH":
+                mask = "au/cases/cth/HCA"
+            url = f"https://www8.austlii.edu.au/cgi-bin/sinosrch.cgi?query={quote_plus(q)}&mask_path={mask}&results=20"
+        async with get_async_client({"User-Agent": USER_AGENT}) as c:
             r = await c.get(url)
         soup = BeautifulSoup(r.text, "html.parser")
         results = []
@@ -176,18 +198,33 @@ async def precedents_search(payload: PrecedentsSearchRequest):
             title = a.text.strip()
             if not href.startswith("http") or "austlii.edu.au" not in href:
                 continue
-            results.append(
-                {
-                    "source_id": hashlib.md5(href.encode()).hexdigest()[:12],
-                    "title": title,
-                    "uri": href,
-                    "type": "judgment",
-                    "ratio": "",
-                    "obiter": "",
-                    "treatment": "considered",
-                    "confidence": 0.6,
-                }
-            )
+            meta = parse_neutral_citation(title)
+            meta.precedential_weight = compute_precedential_weight(meta, now_year=datetime.now(UTC).year)
+            item = {
+                "source_id": hashlib.md5(href.encode()).hexdigest()[:12],
+                "title": title,
+                "uri": href,
+                "type": "judgment",
+                "ratio": "",
+                "obiter": "",
+                "treatment": "considered",
+                "confidence": 0.6,
+                "meta": meta.model_dump(),
+            }
+            try:
+                case_resp = await c.get(href)
+                if case_resp.status_code == 200:
+                    details = parse_case_page(case_resp.text)
+                    item["meta"].update(details)
+            except Exception:
+                pass
+            results.append(item)
+        # Apply court_level filter (typed) or legacy filters.court_level
+        want = (payload.court_level or "").upper() if payload.court_level else None
+        if not want and payload.filters and "court_level" in payload.filters:
+            want = str(payload.filters["court_level"]).upper()
+        if want:
+            results = [r for r in results if ((r.get("meta") or {}).get("court_level") == want)]
         return {"results": results[: (payload.limit or 25)]}
     except Exception:
         return {"results": []}
@@ -198,7 +235,15 @@ def arguments_build(payload: ArgumentsBuildRequest):
     doc_id = payload.doc_id
     if not doc_id or doc_id not in DOCS:
         raise HTTPException(404, "doc not found")
+    # Build authority line from any neutral citations in the doc text
     text = "\n\n".join(DOCS[doc_id].get("text_chunks", []))
+    precedents = []
+    for c in guess_citations(text):
+        if (c.type or "").lower() == "judgment":
+            meta = parse_neutral_citation(c.title or "")
+            meta.precedential_weight = compute_precedential_weight(meta, now_year=datetime.now(UTC).year)
+            precedents.append({"title": meta.neutral_citation or (c.title or ""), "meta": meta.model_dump()})
+
     atom = {
         "issue": "Admissibility of evidentiary certificate",
         "rule": "Evidence Act 2008 (Vic) s 138 (exclusion of improperly obtained evidence).",
@@ -214,6 +259,7 @@ def arguments_build(payload: ArgumentsBuildRequest):
                 "reliability_score": 0.95,
             }
         ],
+        "authority_line": build_authority_line(precedents),
     }
     return {"atoms": [atom]}
 

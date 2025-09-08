@@ -1,0 +1,29 @@
+providers:
+  - id: legislation-vic
+    label: VIC Legislation
+    jurisdictions: [VIC]
+    domains: [www.legislation.vic.gov.au]
+  - id: legislation-cth
+    label: Cth Legislation
+    jurisdictions: [CTH]
+    domains: [www.legislation.gov.au]
+  - id: austlii-vic-cases
+    label: AustLII — VIC Cases
+    jurisdictions: [VIC]
+    domains: [www8.austlii.edu.au]
+    search:
+      kind: austlii
+      base_url: "https://www8.austlii.edu.au/cgi-bin/sinosrch.cgi?query={q}&mask_path=au/cases/vic&results=20"
+  - id: austlii-hca
+    label: AustLII — High Court
+    jurisdictions: [VIC, CTH, OTHER]
+    domains: [www8.austlii.edu.au]
+    search:
+      kind: austlii
+      base_url: "https://www8.austlii.edu.au/cgi-bin/sinosrch.cgi?query={q}&mask_path=au/cases/cth/HCA&results=20"
+
+fallback_order:
+  VIC:   [legislation-vic, austlii-vic-cases, austlii-hca, legislation-cth]
+  CTH:   [legislation-cth, austlii-hca]
+  OTHER: [austlii-hca]
+

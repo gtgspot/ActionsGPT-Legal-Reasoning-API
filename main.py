@@ -1,8 +1,8 @@
-from fastapi import FastAPI, HTTPException, Depends
-from api.models import LegalQuery, LegalResponse
-from dotenv import load_dotenv
 import uvicorn
-import os
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+
+from api.models import LegalQuery, LegalResponse
 
 load_dotenv()
 

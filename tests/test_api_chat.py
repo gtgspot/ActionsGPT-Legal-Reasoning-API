@@ -1,10 +1,10 @@
-from fastapi.testclient import TestClient
 import uuid
 
-from app import app
+from fastapi.testclient import TestClient
+
 from api.state import DOCS
 from api.utils import now_iso
-
+from app import app
 
 client = TestClient(app, headers={"X-API-Key": "test-key"})
 
@@ -28,4 +28,3 @@ def test_chat_returns_assistant_message():
     assert r.status_code == 200
     body = r.json()
     assert body.get("messages") and body["messages"][0]["role"] == "assistant"
-

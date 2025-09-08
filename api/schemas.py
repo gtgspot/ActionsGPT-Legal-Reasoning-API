@@ -1,5 +1,6 @@
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, AnyUrl
+from typing import Any, Dict, List, Literal, Optional
+
+from pydantic import AnyUrl, BaseModel, Field
 
 
 class FileItem(BaseModel):
@@ -49,12 +50,30 @@ class SourcesSearchRequest(BaseModel):
     page: Optional[int] = 1
     per_page: Optional[int] = 20
     include_snippets: bool = True
+    jurisdiction_hint: Optional[str] = None
+
+
+# For request validation without reordering the module, define a local alias
+CourtLevelType = Literal[
+    "HCA",
+    "HCAFC",
+    "VSCA",
+    "VSC",
+    "VCC",
+    "MCV",
+    "VCAT",
+    "FCA",
+    "FCAFC",
+    "OtherAU",
+]
 
 
 class PrecedentsSearchRequest(BaseModel):
     query: str
-    filters: Optional[Dict[str, Any]] = None
+    court_level: Optional[CourtLevelType] = None
+    filters: Optional[Dict[str, Any]] = None  # backward compatibility
     limit: Optional[int] = 25
+    jurisdiction_hint: Optional[str] = None
 
 
 class ArgumentsBuildRequest(BaseModel):
@@ -78,6 +97,107 @@ class DraftDisclosureRequest(BaseModel):
     doc_id: str
     items_requested: List[str]
     jurisdiction: Optional[str] = None
+
+
+class InputSubmitRequest(BaseModel):
+    text: str
+    doc_id: Optional[str] = None
+
+
+class InputSubmitResponse(BaseModel):
+    doc_id: str
+    accepted_bytes: int
+
+
+# ----- Graph / Map Schemas -----
+
+class MapNode(BaseModel):
+    id: str
+    title: Optional[str] = None
+    node_type: Optional[str] = None
+    uri: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class MapEdge(BaseModel):
+    from_: str = Field(alias="from")
+    to: str
+    relation: str
+    pinpoint: Optional[str] = None
+    provenance: Optional[Dict[str, Any]] = None
+    time: Optional[str] = None
+
+    model_config = {
+        "populate_by_name": True,  # allow using key 'from' in payload
+        "json_schema_extra": {
+            "examples": [
+                {"from": "doc:abc", "to": "evidence-act", "relation": "cites"}
+            ]
+        },
+    }
+
+
+class MapGraphResponse(BaseModel):
+    nodes: List[MapNode]
+    edges: List[MapEdge]
+
+
+# ----- Webhooks -----
+
+class WebhookIngestEvent(BaseModel):
+    # Accepts arbitrary structure from external systems
+    model_config = {"extra": "allow"}
+
+
+class WebhookAckResponse(BaseModel):
+    ok: bool
+    ts: str
+    received: Dict[str, Any]
+
+
+# ----- Precedent / Case Law -----
+
+CourtLevel = Literal[
+    "HCA",
+    "HCAFC",
+    "VSCA",
+    "VSC",
+    "VCC",
+    "MCV",
+    "VCAT",
+    "FCA",
+    "FCAFC",
+    "OtherAU",
+]
+
+Treatment = Literal[
+    "followed",
+    "applied",
+    "considered",
+    "distinguished",
+    "not followed",
+    "overruled",
+]
+
+
+class TreatmentCount(BaseModel):
+    treatment: Treatment
+    count: int
+
+
+class CaseMeta(BaseModel):
+    neutral_citation: Optional[str] = None
+    parallel_citations: Optional[List[str]] = None
+    court_level: Optional[CourtLevel] = None
+    panel: Optional[List[str]] = None
+    year: Optional[int] = None
+    disposition: Optional[str] = None
+    ratio_excerpt: Optional[str] = None
+    obiter_excerpt: Optional[str] = None
+    subsequent_treatments: Optional[List[TreatmentCount]] = None
+    binding_on_vic: Optional[bool] = None
+    persuasive_strength: Optional[Literal["high", "medium", "low"]] = None
+    precedential_weight: Optional[float] = None
 
 
 class ExtractStructureRequest(BaseModel):

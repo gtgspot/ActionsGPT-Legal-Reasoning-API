@@ -10,7 +10,7 @@ def main() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     if str(repo_root) not in sys.path:
         sys.path.insert(0, str(repo_root))
-    from app import app  # type: ignore
+    from app import app
 
     site = Path("site")
     site.mkdir(parents=True, exist_ok=True)

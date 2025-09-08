@@ -1,12 +1,11 @@
-from typing import Any, Dict, List
+from typing import List
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..config import CANON
 from ..schemas import DraftDisclosureRequest
 from ..security import api_key_guard
 from ..state import DOCS
-
 
 router = APIRouter(dependencies=[Depends(api_key_guard)])
 
