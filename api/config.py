@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Dict
 
@@ -28,6 +29,11 @@ ALLOWED_DOMAINS = {
     "huggingface.co",
     "github.com",
 }
+# Extend allowlist from environment (comma-separated)
+extra_domains = os.environ.get("ALLOWED_DOMAINS_CSV")
+if extra_domains:
+    for d in [s.strip() for s in extra_domains.split(",") if s.strip()]:
+        ALLOWED_DOMAINS.add(d)
 USER_AGENT = "ActionsGPT-Legal/1.0 (+https://example.org)"
 
 # Max characters to keep from fetched/parsed content

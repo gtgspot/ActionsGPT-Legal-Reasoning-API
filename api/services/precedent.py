@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from ..config import PRECEDENT_WEIGHTS
 from ..schemas import CaseMeta, CourtLevel
@@ -126,7 +126,8 @@ def parse_neutral_citation(text: str) -> CaseMeta:
         court = m.group("court").upper()
         cite = f"[{year}] {court} {m.group('num')}"
     allowed: set[str] = {"HCA", "HCAFC", "VSCA", "VSC", "VCC", "MCV", "VCAT", "FCA", "FCAFC", "OtherAU"}
-    norm: Optional[CourtLevel] = (court if (court in allowed) else ("OtherAU" if court else None))  # type: ignore[assignment]
+    v: Optional[str] = court if (court in allowed) else ("OtherAU" if court else None)
+    norm = cast(Optional[CourtLevel], v)
     meta = CaseMeta(neutral_citation=cite, court_level=norm, year=year)
     meta.binding_on_vic = is_binding_on_vic(meta.court_level)
     return meta

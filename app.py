@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -18,12 +20,13 @@ app = FastAPI(
     description="Key-less, autonomous retrieval and preprocessing for Victorian/Australian legal materials.",
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
-)
+# CORS: allow from env list or fallback to "*"
+cors_env = os.environ.get("CORS_ALLOW_ORIGINS", "*").strip()
+if cors_env and cors_env != "*":
+    origins = [o.strip() for o in cors_env.split(",") if o.strip()]
+else:
+    origins = ["*"]
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Authorization", "Content-Type"])
 
 # Include routers
 app.include_router(health_router)
@@ -68,7 +71,9 @@ def custom_openapi():
         "contact_email": "support@example.org",
         "legal_info_url": "https://example.org/terms",
     }
-    openapi_schema["servers"] = [{"url": "https://api.example.org/legal/v1"}]
+    # Use an env-provided API base if present (e.g., https://api.yourdomain.com)
+    api_base = os.environ.get("API_BASE_URL", "https://api.example.org/legal/v1")
+    openapi_schema["servers"] = [{"url": api_base}]
     # Security scheme
     openapi_schema.setdefault("components", {}).setdefault("securitySchemes", {}).update(
         {

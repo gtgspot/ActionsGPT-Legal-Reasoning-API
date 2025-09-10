@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import importlib
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -53,9 +54,8 @@ def _load_providers_config() -> Optional[Dict[str, Any]]:
     if not cfg.exists():
         return None
     try:
-        import yaml  # type: ignore
-
-        data = yaml.safe_load(cfg.read_text())
+        yaml_mod: Any = importlib.import_module("yaml")
+        data = yaml_mod.safe_load(cfg.read_text())
         return data if isinstance(data, dict) else None
     except Exception:
         # Minimal fallback parser for just fallback_order in our simple YAML
