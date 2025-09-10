@@ -84,6 +84,53 @@ python -m http.server -d site 8080
 
 Branding via repo variables (for CI/Pages): `PAGES_SITE_TITLE`, `PAGES_PRIMARY_COLOR`, `PAGES_ACCENT_COLOR`, `PAGES_API_BASE`. Custom domain: set `PAGES_CUSTOM_DOMAIN` and a matching DNS CNAME (e.g., `docs.legis.com.au` → `gtgspot.github.io`).
 
+## Package Registries API
+
+Resolve package/module pages across common ecosystems; optionally fetch basic JSON metadata when available.
+
+- Endpoint: `POST /registries/search`
+- Body:
+  - `language`: `python | node | java | go | rust | ruby | php | dotnet`
+  - `name`: package/module name (Composer uses `vendor/package`)
+  - `group` and `artifact` (optional): for Maven Central artifact pages
+  - `include_fetch` (optional): `true` to attempt a JSON fetch from the registry API (best‑effort)
+
+Examples
+
+```bash
+# PyPI
+curl -H 'X-API-Key: dev-key' \
+     -H 'Content-Type: application/json' \
+     -d '{"language":"python","name":"requests","include_fetch":true}' \
+     http://localhost:8000/registries/search | jq
+
+# npm
+curl -H 'X-API-Key: dev-key' \
+     -H 'Content-Type: application/json' \
+     -d '{"language":"node","name":"lodash","include_fetch":true}' \
+     http://localhost:8000/registries/search | jq
+
+# Maven Central (web URL)
+curl -H 'X-API-Key: dev-key' \
+     -H 'Content-Type: application/json' \
+     -d '{"language":"java","group":"org.apache.commons","artifact":"commons-lang3"}' \
+     http://localhost:8000/registries/search | jq
+
+# Composer/Packagist
+curl -H 'X-API-Key: dev-key' \
+     -H 'Content-Type: application/json' \
+     -d '{"language":"php","name":"symfony/console","include_fetch":true}' \
+     http://localhost:8000/registries/search | jq
+
+# NuGet
+curl -H 'X-API-Key: dev-key' \
+     -H 'Content-Type: application/json' \
+     -d '{"language":"dotnet","name":"Newtonsoft.Json","include_fetch":true}' \
+     http://localhost:8000/registries/search | jq
+```
+
+Allowlisted registries include: PyPI, npm, Yarn, Maven Central, Go proxy/pkg.go.dev, crates.io, RubyGems, Packagist, and NuGet (see `config/registries.yml` and `api/config.py`).
+
 ## OpenAPI & Security
 
 - OpenAPI is served from the app with enriched metadata and `ApiKeyAuth` security scheme (header `X-API-Key`).
