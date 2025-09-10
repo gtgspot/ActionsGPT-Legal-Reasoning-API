@@ -328,12 +328,7 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
               <a class=\"btn\" href=\"map.html\">Citations Map</a>
             </nav>
           </header>
-          <section class=\"container\" style=\"padding:18px\">
-            <form id=\"explorer-form\"> 
-              <input id=\"explorer-input\" class=\"input\" placeholder=\"Search e.g. Evidence Act s 138\" />
-            </form>
-            <div id=\"explorer-out\" style=\"margin-top: 10px;\"></div>
-          </section>
+          <section class=\"container\" style=\"padding:18px\">\n            <div class=\"grid\" style=\"grid-template-columns: 1fr; gap: 16px;\">\n              <div class=\"card\">\n                <h3>Legal Sources Explorer</h3>\n                <form id=\"explorer-form\">\n                  <input id=\"explorer-input\" class=\"input\" placeholder=\"Search e.g. Evidence Act s 138\" />\n                </form>\n                <div id=\"explorer-out\" style=\"margin-top: 10px;\"></div>\n              </div>\n              <div class=\"card\">\n                <h3>Package Registries</h3>\n                <form id=\"registries-form\" class=\"grid\" style=\"grid-template-columns: 1fr 1fr; gap:10px;\">\n                  <select id=\"registries-lang\" class=\"input\">\n                    <option value=\"python\">Python (PyPI)</option>\n                    <option value=\"node\">Node (npm/Yarn)</option>\n                    <option value=\"java\">Java (Maven)</option>\n                    <option value=\"go\">Go (pkg.go.dev)</option>\n                    <option value=\"rust\">Rust (crates.io)</option>\n                    <option value=\"ruby\">Ruby (RubyGems)</option>\n                    <option value=\"php\">PHP (Packagist)</option>\n                    <option value=\"dotnet\">.NET (NuGet)</option>\n                  </select>\n                  <input id=\"registries-name\" class=\"input\" placeholder=\"package (or vendor/name)\" />\n                  <input id=\"registries-group\" class=\"input\" placeholder=\"maven group (optional)\" />\n                  <input id=\"registries-artifact\" class=\"input\" placeholder=\"maven artifact (optional)\" />\n                  <label><input id=\"registries-fetch\" type=\"checkbox\" /> include fetch</label>\n                  <button class=\"btn primary\" type=\"submit\">Resolve</button>\n                </form>\n                <div id=\"registries-out\" class=\"list\" style=\"margin-top:10px\"></div>\n              </div>\n            </div>\n          </section>
         </div>
       </body>
     </html>"""
