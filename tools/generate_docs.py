@@ -301,6 +301,15 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
                 <div class=\"muted\">Strongly‑typed requests and responses for predictable integrations.</div>
               </div>
             </div>
+            <div class=\"card\" style=\"margin-top: 16px;\">
+              <h3>Quick Links</h3>
+              <div class=\"btns\">
+                <a class=\"btn\" href=\"explorer.html\" target=\"_blank\">Open Explorer</a>
+                <a class=\"btn\" href=\"map.html\" target=\"_blank\">Open Citations Map</a>
+                <a class=\"btn\" href=\"api.html\" target=\"_blank\">Open API Docs</a>
+                <a class=\"btn\" href=\"chat.html\" target=\"_blank\">Open Chat</a>
+              </div>
+            </div>
           </section>
         </div>
       </body>
