@@ -232,3 +232,19 @@ class ChatRequest(BaseModel):
     doc_id: str
     messages: List[ChatMessage]
     jurisdiction_hint: Optional[str] = None
+
+
+# ----- Registries -----
+
+class RegistrySearchRequest(BaseModel):
+    language: str  # python | node | java | go | rust | ruby | php | dotnet
+    name: str  # package/module/crate name (use vendor/name for composer)
+    group: Optional[str] = None  # for Maven (groupId)
+    artifact: Optional[str] = None  # for Maven (artifactId)
+    include_fetch: bool = False  # if true, try to fetch JSON/info where available
+
+class RegistrySearchResponse(BaseModel):
+    registry_id: str
+    web_url: Optional[str] = None
+    api_url: Optional[str] = None
+    fetched: Optional[Dict[str, Any]] = None

@@ -25,9 +25,10 @@ def _load_hierarchy() -> Optional[Dict[str, Any]]:
         _HIER_CACHE = None
         return None
     try:
-        import yaml  # type: ignore
+        import importlib
 
-        data = yaml.safe_load(p.read_text())
+        yaml_mod = importlib.import_module("yaml")
+        data = yaml_mod.safe_load(p.read_text())
         _HIER_CACHE = data if isinstance(data, dict) else None
     except Exception:
         _HIER_CACHE = None
