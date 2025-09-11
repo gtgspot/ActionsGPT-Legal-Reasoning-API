@@ -22,12 +22,27 @@ class PromptClient:
     def __init__(self, config_path: str = "codex_config.json") -> None:
         self.root = Path.cwd()
         self.config = json.loads(Path(config_path).read_text())
+        # Either explicit mapping or a directory to resolve defaults
         self.templates: Dict[str, str] = self.config.get("templates", {})
+        self.templates_dir: Optional[str] = self.config.get("prompt_templates_dir")
 
     def load(self, name: str) -> Prompt:
-        if name not in self.templates:
+        path: Optional[Path] = None
+        if name in self.templates:
+            path = (self.root / self.templates[name]).resolve()
+        elif self.templates_dir:
+            # Default file naming convention
+            fallback = {
+                "generate_tests": "generate_tests.v1.tpl",
+                "refactor_extract": "refactor_extract.v1.tpl",
+                "add_type_annotations": "add_type_annotations.v1.tpl",
+            }.get(name)
+            if not fallback:
+                raise KeyError(f"unknown template: {name}")
+            path = (self.root / self.templates_dir / fallback).resolve()
+        else:
             raise KeyError(f"unknown template: {name}")
-        p = (self.root / self.templates[name]).resolve()
+        p = path
         return Prompt(name=name, path=p, text=p.read_text(encoding="utf-8"))
 
     def render(self, prompt: Prompt, **vars: str) -> str:
@@ -41,4 +56,3 @@ class PromptClient:
 
 
 __all__ = ["PromptClient", "Prompt"]
-
