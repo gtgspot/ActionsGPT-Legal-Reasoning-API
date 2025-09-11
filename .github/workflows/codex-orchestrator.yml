@@ -1,0 +1,39 @@
+name: Codex Orchestrator
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Task to render (generate-tests | refactor-extract | add-type-annotations)"
+        required: true
+        default: "generate-tests"
+      path:
+        description: "Target path"
+        required: false
+        default: "."
+      symbol:
+        description: "Symbol to extract (refactor-extract only)"
+        required: false
+        default: ""
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Render prompt
+        run: |
+          python -m pip install --upgrade pip
+          echo "Rendering ${{ github.event.inputs.task }} for ${{ github.event.inputs.path }}"
+          python codex_orchestrator.py ${{ github.event.inputs.task }} --path "${{ github.event.inputs.path }}" --symbol "${{ github.event.inputs.symbol }}" --out codex_prompt.txt
+          echo "--- Rendered prompt ---"
+          sed -n '1,200p' codex_prompt.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-prompt
+          path: codex_prompt.txt
+

@@ -1,0 +1,12 @@
+{
+  "templates": {
+    "generate_tests": ".codex/prompts/generate_tests.v1.tpl",
+    "refactor_extract": ".codex/prompts/refactor_extract.v1.tpl",
+    "add_type_annotations": ".codex/prompts/add_type_annotations.v1.tpl"
+  },
+  "defaults": {
+    "language": "python",
+    "max_tokens": 2048
+  }
+}
+
