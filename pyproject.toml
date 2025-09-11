@@ -37,8 +37,17 @@ dependencies = [
 
 [tool.setuptools]
 package-dir = { "" = "." }
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["api*", "config*", "data*"]
 exclude = ["sandbox*", "tests*", "test*", "docs*", "scripts*", ".*"]
+
+[tool.setuptools.data-files]
+config = [
+  "config/*.yml",
+]
+data = [
+  "data/*.json",
+]
