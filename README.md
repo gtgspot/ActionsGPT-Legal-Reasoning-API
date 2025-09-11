@@ -136,6 +136,24 @@ Allowlisted registries include: PyPI, npm, Yarn, Maven Central, Go proxy/pkg.go.
 - OpenAPI is served from the app with enriched metadata and `ApiKeyAuth` security scheme (header `X-API-Key`).
 - Set `EXPECT_API_KEY` to enable key enforcement; unset to disable.
 
+## Environment Variables
+
+Copy `.env.example` and set values appropriate to your deployment.
+
+- Core
+  - `EXPECT_API_KEY`: require `X-API-Key` header on protected routes.
+  - `CORS_ALLOW_ORIGINS`: comma-separated origins for browsers.
+  - `API_BASE_URL`: OpenAPI server URL (e.g., `https://api.yourdomain.com`).
+  - `ALLOWED_DOMAINS_CSV`: extend outbound allowlist.
+- GitHub App (optional; never commit secrets)
+  - `GITHUB_APP_ID`, `GITHUB_APP_CLIENT_ID` (public identifiers)
+  - `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_WEBHOOK_SECRET` (secrets)
+  - `GITHUB_APP_PRIVATE_KEY` (server-to-server auth; PEM)
+- Docs site (optional)
+  - `PAGES_SITE_TITLE`, `PAGES_PRIMARY_COLOR`, `PAGES_ACCENT_COLOR`, `PAGES_API_BASE`, `PAGES_CUSTOM_DOMAIN`.
+
+Security note: if any secret was posted publicly, rotate it immediately in the provider and update the environment.
+
 ## License
 
 Private repository — All rights reserved

@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 # ---------- Configuration ----------
 ALLOWED_DOMAINS = {
@@ -87,6 +87,23 @@ THROTTLE_DEFAULT = {
     "min_delay_ms": 0,
     "max_inflight": 4,
 }
+
+# GitHub App (optional) — read from environment
+def _getenv_int(name: str) -> Optional[int]:
+    v = os.environ.get(name)
+    if v is None or not v.strip():
+        return None
+    try:
+        return int(v)
+    except Exception:
+        return None
+
+
+GITHUB_APP_ID: Optional[int] = _getenv_int("GITHUB_APP_ID")
+GITHUB_APP_CLIENT_ID: Optional[str] = os.environ.get("GITHUB_APP_CLIENT_ID")
+# NOTE: CLIENT_SECRET and WEBHOOK_SECRET are sensitive; never log them
+GITHUB_APP_CLIENT_SECRET: Optional[str] = os.environ.get("GITHUB_APP_CLIENT_SECRET")
+GITHUB_APP_WEBHOOK_SECRET: Optional[str] = os.environ.get("GITHUB_APP_WEBHOOK_SECRET")
 
 CANON_DEFAULT: Dict[str, str] = {
     "Road Safety Act 1986 (Vic)": "https://www.legislation.vic.gov.au/in-force/acts/road-safety-act-1986",
