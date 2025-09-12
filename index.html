@@ -4,27 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ActionsGPT — Legal Reasoning API</title>
-    <style>
-      :root { --bg:#0b0c10; --panel:#111317; --text:#e6edf3; --muted:#9aa7b2; --border:#23262e; --brand:#1f6feb; }
-      * { box-sizing: border-box; }
-      html, body { height: 100%; margin: 0; }
-      body { font: 15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background: var(--bg); color: var(--text); }
-      .wrap { max-width: 960px; margin: 0 auto; padding: 32px 18px; }
-      h1 { margin: 0 0 8px 0; font-size: 26px; }
-      p { margin: 0 0 18px 0; color: var(--muted); }
-      .cards { display: grid; grid-template-columns: 1fr; gap: 12px; }
-      @media (min-width: 800px) { .cards { grid-template-columns: repeat(2, 1fr); } }
-      .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-      .btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-      a.btn { text-decoration: none; color: #fff; background: var(--brand); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--brand); }
-      a.link { color: var(--brand); text-decoration: none; }
-      a.link:hover { text-decoration: underline; }
-      .muted { color: var(--muted); }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
   </head>
   <body>
     <div class="wrap">
-      <h1>ActionsGPT — Legal Reasoning API</h1>
+      <header class="site-header">
+        <h1>ActionsGPT — Legal Reasoning API</h1>
+        <button id="theme-toggle" class="btn btn-secondary" aria-label="Toggle theme" aria-pressed="false">Switch to Dark</button>
+      </header>
       <p class="muted">Minimal FastAPI service for legal retrieval, citation‑aware mapping, precedent ranking, and structured drafting.</p>
 
       <div class="cards">
