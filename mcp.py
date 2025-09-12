@@ -7,6 +7,11 @@ from typing import Any
 
 from agents import Agent, Runner, trace
 from agents.mcp import MCPServer, MCPServerStdio
+from autogen_agentchat.agents import AssistantAgent  # noqa: F401
+from autogen_agentchat.conditions import TextMentionTermination  # noqa: F401
+from autogen_agentchat.teams import RoundRobinGroupChat  # noqa: F401
+from autogen_agentchat.ui import Console  # noqa: F401
+from autogen_ext.models.openai import OpenAIChatCompletionClient  # noqa: F401
 
 import api  # noqa: F401
 import app  # noqa: F401
