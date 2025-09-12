@@ -4,7 +4,10 @@ from datetime import UTC, datetime
 from typing import Any, Dict, List
 from urllib.parse import quote_plus
 
-from bs4 import BeautifulSoup
+try:  # optional dep
+    from bs4 import BeautifulSoup
+except Exception:  # pragma: no cover - optional dep
+    BeautifulSoup = None
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..config import CANON, USER_AGENT
@@ -77,22 +80,26 @@ def map_legislation(payload: Dict[str, Any]) -> MapGraphResponse:
     nodes: List[Dict[str, Any]] = []
     edges: List[Dict[str, Any]] = []
     # Document node with time facet
-    nodes.append({
-        "id": f"doc:{doc_id}",
-        "title": rec.get("meta", {}).get("title") or f"Document {doc_id[:8]}",
-        "node_type": "Document",
-        "created_at": rec.get("created_at"),
-    })
+    nodes.append(
+        {
+            "id": f"doc:{doc_id}",
+            "title": rec.get("meta", {}).get("title") or f"Document {doc_id[:8]}",
+            "node_type": "Document",
+            "created_at": rec.get("created_at"),
+        }
+    )
     # Canon nodes + edges with provenance and pinpoints
     for ref in citations:
         sid = ref.source_id
         if not any(n.get("id") == sid for n in nodes):
-            nodes.append({
-                "id": sid,
-                "title": ref.title,
-                "node_type": "Statute" if "Act" in (ref.title or "") else "Rule",
-                "uri": ref.uri,
-            })
+            nodes.append(
+                {
+                    "id": sid,
+                    "title": ref.title,
+                    "node_type": "Statute" if "Act" in (ref.title or "") else "Rule",
+                    "uri": ref.uri,
+                }
+            )
         # find a small snippet around pinpoint if present
         snippet = None
         if ref.pinpoint:
@@ -101,16 +108,20 @@ def map_legislation(payload: Dict[str, Any]) -> MapGraphResponse:
                 start = max(0, loc - 60)
                 end = min(len(text), loc + 60)
                 snippet = text[start:end]
-        edges.append({
-            "from": f"doc:{doc_id}",
-            "to": sid,
-            "relation": "cites",
-            "pinpoint": ref.pinpoint,
-            "provenance": {"doc_id": doc_id, "snippet": snippet},
-            "time": rec.get("created_at"),
-        })
+        edges.append(
+            {
+                "from": f"doc:{doc_id}",
+                "to": sid,
+                "relation": "cites",
+                "pinpoint": ref.pinpoint,
+                "provenance": {"doc_id": doc_id, "snippet": snippet},
+                "time": rec.get("created_at"),
+            }
+        )
     # Pydantic models will validate structure
-    return MapGraphResponse(nodes=[MapNode(**n) for n in nodes], edges=[MapEdge(**e) for e in edges])
+    return MapGraphResponse(
+        nodes=[MapNode(**n) for n in nodes], edges=[MapEdge(**e) for e in edges]
+    )
 
 
 @router.get("/map/citations/{doc_id}", response_model=MapGraphResponse)
@@ -132,21 +143,27 @@ def map_citations(doc_id: str) -> MapGraphResponse:
     for ref in citations:
         sid = ref.source_id
         if not any(n.get("id") == sid for n in nodes):
-            nodes.append({
-                "id": sid,
-                "title": ref.title,
-                "node_type": "Statute" if "Act" in (ref.title or "") else "Rule",
-                "uri": ref.uri,
-            })
-        edges.append({
-            "from": f"doc:{doc_id}",
-            "to": sid,
-            "relation": "cites",
-            "pinpoint": ref.pinpoint,
-            "provenance": {"doc_id": doc_id},
-            "time": rec.get("created_at"),
-        })
-    return MapGraphResponse(nodes=[MapNode(**n) for n in nodes], edges=[MapEdge(**e) for e in edges])
+            nodes.append(
+                {
+                    "id": sid,
+                    "title": ref.title,
+                    "node_type": "Statute" if "Act" in (ref.title or "") else "Rule",
+                    "uri": ref.uri,
+                }
+            )
+        edges.append(
+            {
+                "from": f"doc:{doc_id}",
+                "to": sid,
+                "relation": "cites",
+                "pinpoint": ref.pinpoint,
+                "provenance": {"doc_id": doc_id},
+                "time": rec.get("created_at"),
+            }
+        )
+    return MapGraphResponse(
+        nodes=[MapNode(**n) for n in nodes], edges=[MapEdge(**e) for e in edges]
+    )
 
 
 @router.post("/cite/aglc4")
@@ -176,6 +193,8 @@ async def precedents_search(payload: PrecedentsSearchRequest):
     q = payload.query or ""
     if not q:
         raise HTTPException(400, "query is required")
+    if BeautifulSoup is None:
+        raise HTTPException(500, "beautifulsoup4 is required for precedents search")
     try:
         order = select_providers(payload.jurisdiction_hint)
         url = None
@@ -199,7 +218,9 @@ async def precedents_search(payload: PrecedentsSearchRequest):
             if not href.startswith("http") or "austlii.edu.au" not in href:
                 continue
             meta = parse_neutral_citation(title)
-            meta.precedential_weight = compute_precedential_weight(meta, now_year=datetime.now(UTC).year)
+            meta.precedential_weight = compute_precedential_weight(
+                meta, now_year=datetime.now(UTC).year
+            )
             item = {
                 "source_id": hashlib.md5(href.encode()).hexdigest()[:12],
                 "title": title,
@@ -241,8 +262,12 @@ def arguments_build(payload: ArgumentsBuildRequest):
     for c in guess_citations(text):
         if (c.type or "").lower() == "judgment":
             meta = parse_neutral_citation(c.title or "")
-            meta.precedential_weight = compute_precedential_weight(meta, now_year=datetime.now(UTC).year)
-            precedents.append({"title": meta.neutral_citation or (c.title or ""), "meta": meta.model_dump()})
+            meta.precedential_weight = compute_precedential_weight(
+                meta, now_year=datetime.now(UTC).year
+            )
+            precedents.append(
+                {"title": meta.neutral_citation or (c.title or ""), "meta": meta.model_dump()}
+            )
 
     atom = {
         "issue": "Admissibility of evidentiary certificate",
