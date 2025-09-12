@@ -1,3 +1,5 @@
+"""Example script demonstrating the MCP filesystem server."""
+
 import asyncio
 import os
 import shutil
@@ -51,4 +53,4 @@ if __name__ == "__main__":
     if not shutil.which("npx"):
         raise RuntimeError("npx is not installed. Please install it with `npm install -g npx`.")
 
-    asyncio.run(main()
+    asyncio.run(main())
