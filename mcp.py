@@ -8,6 +8,9 @@ from typing import Any
 from agents import Agent, Runner, trace
 from agents.mcp import MCPServer, MCPServerStdio
 
+import api  # noqa: F401
+import app  # noqa: F401
+
 ADDITIONAL_CONTEXT: dict[str, Any] = {
     "provider": "autogen_agentchat.agents.AssistantAgent",
     "component_type": "agent",
