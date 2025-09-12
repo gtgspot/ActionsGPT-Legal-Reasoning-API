@@ -9,6 +9,7 @@ from api.routers.analysis import router as analysis_router
 from api.routers.canon import router as canon_router
 from api.routers.documents import router as documents_router
 from api.routers.drafts import router as drafts_router
+from api.routers.feedback import router as feedback_router
 from api.routers.health import router as health_router
 from api.routers.registries import router as registries_router
 from api.routers.sources import router as sources_router
@@ -27,7 +28,12 @@ if cors_env and cors_env != "*":
     origins = [o.strip() for o in cors_env.split(",") if o.strip()]
 else:
     origins = ["*"]
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Authorization", "Content-Type"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 # Include routers
 app.include_router(health_router)
@@ -36,6 +42,7 @@ app.include_router(sources_router)
 app.include_router(analysis_router)
 app.include_router(drafts_router)
 app.include_router(uploads_router)
+app.include_router(feedback_router)
 app.include_router(webhooks_router)
 app.include_router(canon_router)
 app.include_router(admin_router)
@@ -54,9 +61,9 @@ def custom_openapi():
         routes=app.routes,
     )
     # Enrich with extensions and security matching the provided YAML intent
-    openapi_schema["info"]["summary"] = (
-        "Autonomously identify legal arguments, map legislation, generate AGLC4 citations, and weight issues in fact."
-    )
+    openapi_schema["info"][
+        "summary"
+    ] = "Autonomously identify legal arguments, map legislation, generate AGLC4 citations, and weight issues in fact."
     openapi_schema["x-oaiMeta"] = {
         "name": "ActionsGPT — Legal Reasoning",
         "description_for_model": (
