@@ -17,6 +17,7 @@ from ..schemas import (
     ExtractStructureRequest,
     MapEdge,
     MapGraphResponse,
+    MapLegislationRequest,
     MapNode,
     PrecedentsSearchRequest,
     QARequest,
@@ -67,8 +68,8 @@ def extract_structure(payload: ExtractStructureRequest):
 
 
 @router.post("/map/legislation", response_model=MapGraphResponse)
-def map_legislation(payload: Dict[str, Any]) -> MapGraphResponse:
-    doc_id = payload.get("doc_id")
+def map_legislation(payload: MapLegislationRequest) -> MapGraphResponse:
+    doc_id = payload.doc_id
     if not doc_id or doc_id not in DOCS:
         raise HTTPException(404, "doc not found")
     rec = DOCS[doc_id]
