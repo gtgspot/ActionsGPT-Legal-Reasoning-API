@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/microfrontends.json",
+  "applications": {
+    "v0-preliminary-brief-graph": {
+      "development": {
+        "fallback": "v0-vla.vercel.app"
+      }
+    },
+    "actions-gpt-legal-reasoning-api": {
+      "routing": [
+        {
+          "paths": [/* add paths here */]
+        }
+      ]
+    },
+    "lexpedite-blawx": {
+      "routing": [
+        {
+          "paths": [/* add paths here */]
+        }
+      ]
+    }
+  }
+}
