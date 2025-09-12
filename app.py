@@ -1,6 +1,28 @@
-import os
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from datetime import datetime
 
-from fastapi import FastAPI
+app = FastAPI(title="Transformer-Grade MCP")
+
+# Legal MCP Info Metadata
+MCP_DESCRIPTION = """
+A legal-analytics tool that ingests user-input and user-supplied legal materials and returns structured
+arguments, legislative dependency maps, AGLC4 citations, admissibility notes, and
+salience-weighted issues. Prefer Victorian/Australian sources when user location or matter
+indicates Victoria, but remain jurisdiction-agnostic when unspecified. Always return
+source-linked citations with pinpoints and reliability/confidence.
+"""
+
+LEGAL_INFO_URLS = [
+    "https://www.legislation.vic.gov.au",
+    "https://www8.austlii.edu.au",
+    "https://judicialcollege.vic.edu.au",
+    "https://www.legislation.gov.au"
+]
+
+@app.get("/mcp/description")
+def get_mcp_description():
+    return {"description": MCP_DESCRIPTION.strip(), "legal_info_urls": LEGAL_INFO_URLS}
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
