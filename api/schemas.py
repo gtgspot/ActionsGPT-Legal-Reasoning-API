@@ -111,6 +111,13 @@ class InputSubmitResponse(BaseModel):
 
 # ----- Graph / Map Schemas -----
 
+
+class MapLegislationRequest(BaseModel):
+    """Request payload for mapping legislation citations."""
+
+    doc_id: str
+
+
 class MapNode(BaseModel):
     id: str
     title: Optional[str] = None
