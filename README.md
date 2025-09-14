@@ -131,6 +131,19 @@ curl -H 'X-API-Key: dev-key' \
 
 Allowlisted registries include: PyPI, npm, Yarn, Maven Central, Go proxy/pkg.go.dev, crates.io, RubyGems, Packagist, and NuGet (see `config/registries.yml` and `api/config.py`).
 
+## Feedback & Fine-Tuning
+
+Submit corrected outputs to refine the model incrementally.
+
+```bash
+curl -H 'X-API-Key: dev-key' \
+     -H 'Content-Type: application/json' \
+     -d '{"input_text":"Example prompt","expected_output":"Desired answer"}' \
+     http://localhost:8000/feedback
+```
+
+Feedback items are queued and processed in the background to update the transformer model. Only send non-sensitive data and ensure callers are authenticated with `X-API-Key` to prevent abuse.
+
 ## OpenAPI & Security
 
 - OpenAPI is served from the app with enriched metadata and `ApiKeyAuth` security scheme (header `X-API-Key`).
