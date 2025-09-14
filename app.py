@@ -21,13 +21,18 @@ app = FastAPI(
     description="Key-less, autonomous retrieval and preprocessing for Victorian/Australian legal materials.",
 )
 
-# CORS: allow from env list or fallback to "*"
-cors_env = os.environ.get("CORS_ALLOW_ORIGINS", "*").strip()
-if cors_env and cors_env != "*":
-    origins = [o.strip() for o in cors_env.split(",") if o.strip()]
+# CORS: allow from env list or default to specific origins
+cors_env = os.environ.get("CORS_ALLOW_ORIGINS")
+if cors_env:
+    cors_allow_origins = [o.strip() for o in cors_env.split(",") if o.strip()]
 else:
-    origins = ["*"]
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Authorization", "Content-Type"])
+    cors_allow_origins = ["https://app.legis.com.au", "https://docs.legis.com.au"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_allow_origins,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 # Include routers
 app.include_router(health_router)
@@ -54,9 +59,9 @@ def custom_openapi():
         routes=app.routes,
     )
     # Enrich with extensions and security matching the provided YAML intent
-    openapi_schema["info"]["summary"] = (
-        "Autonomously identify legal arguments, map legislation, generate AGLC4 citations, and weight issues in fact."
-    )
+    openapi_schema["info"][
+        "summary"
+    ] = "Autonomously identify legal arguments, map legislation, generate AGLC4 citations, and weight issues in fact."
     openapi_schema["x-oaiMeta"] = {
         "name": "ActionsGPT — Legal Reasoning",
         "description_for_model": (

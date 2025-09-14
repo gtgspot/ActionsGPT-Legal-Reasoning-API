@@ -26,7 +26,7 @@ def main() -> None:
     primary = os.environ.get("PAGES_PRIMARY_COLOR", "#1f6feb")
     accent = os.environ.get("PAGES_ACCENT_COLOR", "#0969da")
     title = os.environ.get("PAGES_SITE_TITLE", "ActionsGPT — Legal Reasoning API")
-    api_base = os.environ.get("PAGES_API_BASE", "")
+    api_base = os.environ.get("PAGES_API_BASE", "https://api.legis.com.au")
 
     css = f""":root {{
   --brand-primary: {primary};

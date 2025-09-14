@@ -72,7 +72,8 @@ pytest -q
 
 ## Docs Site (static)
 
-Point the explorer to your API and build:
+Point the explorer to your API and build. The deployed site uses the public API at
+`https://api.legis.com.au`; override `PAGES_API_BASE` for local testing:
 
 ```bash
 export PAGES_API_BASE=http://localhost:8000
