@@ -59,6 +59,9 @@ if extra_domains:
         ALLOWED_DOMAINS.add(d)
 USER_AGENT = "ActionsGPT-Legal/1.0 (+https://example.org)"
 
+# Default transformer model for analysis service
+TRANSFORMER_MODEL = os.environ.get("TRANSFORMER_MODEL", "distilgpt2")
+
 # Max characters to keep from fetched/parsed content
 MAX_TEXT_CHARS = 200_000
 
@@ -87,6 +90,7 @@ THROTTLE_DEFAULT = {
     "min_delay_ms": 0,
     "max_inflight": 4,
 }
+
 
 # GitHub App (optional) — read from environment
 def _getenv_int(name: str) -> Optional[int]:
@@ -131,6 +135,7 @@ CANON_DEFAULT: Dict[str, str] = {
     "Criminal Procedure Act 2009 (Vic)": "https://www.legislation.vic.gov.au/in-force/acts/criminal-procedure-act-2009",
 }
 
+
 # Load external canon (if present), merge over defaults
 def _load_canon() -> Dict[str, str]:
     data_path = Path(__file__).resolve().parents[1] / "data" / "canon.json"
@@ -145,6 +150,7 @@ def _load_canon() -> Dict[str, str]:
         # Fall back silently if file malformed
         pass
     return canon
+
 
 CANON: Dict[str, str] = _load_canon()
 
