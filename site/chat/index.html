@@ -7,14 +7,56 @@
     <link rel="stylesheet" href="../../styles.css" />
     <script src="../../script.js" defer></script>
   </head>
-  <body>
-    <div class="wrap">
-      <header class="site-header">
-        <h1>Chat</h1>
-        <button id="theme-toggle" class="btn btn-secondary" aria-label="Toggle theme" aria-pressed="false">Switch to Dark</button>
-      </header>
-      <p class="muted">Conversational interface placeholder.</p>
-      <p><a class="link" href="../../index.html">Back to home</a></p>
-    </div>
+  <body data-theme="dark" data-page="chat">
+    <header class="site-header wrap">
+      <div class="brand">
+        <h1>ActionsGPT Chat</h1>
+        <span>Dialogue-first legal analysis with citation fidelity</span>
+      </div>
+      <nav class="nav" aria-label="Primary navigation">
+        <a data-page-link="home" href="../../index.html">Overview</a>
+        <a data-page-link="explorer" href="../explorer/">Explorer</a>
+        <a data-page-link="api" href="../api/">API Docs</a>
+        <a data-page-link="map" href="../map/">Citations Map</a>
+        <a data-page-link="chat" href="../chat/">Chat</a>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn-outline" href="https://github.com/gtgspot/ActionsGPT-Legal-Reasoning-API" target="_blank" rel="noreferrer">View repository</a>
+        <button id="theme-toggle" class="btn btn-secondary theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark theme">Dark theme</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="page-intro">
+        <h2>Conversational Assistant</h2>
+        <p>
+          Reference-grade chat experiences pair generative answers with citations, qubit ambiguity metrics, and jurisprudential
+          diagnostics. Every response surfaces supporting authorities and countervailing precedent candidates.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h3>Roadmap</h3>
+        <ul>
+          <li>Context windows aligned with court submission limits and confidentiality guardrails.</li>
+          <li>Live citation validation and instant Shepardizing of generated assertions.</li>
+          <li>Bias awareness toggles to simulate different judicial lean profiles mid-conversation.</li>
+          <li>Hand-off tooling to convert chats into draft briefs or diligence reports.</li>
+        </ul>
+      </section>
+
+      <section class="content-section">
+        <h3>Stay informed</h3>
+        <p class="muted">Join the early access list to test the ActionsGPT chat sandbox with your legal team.</p>
+        <a class="btn btn-primary" href="mailto:hello@actionsgpt.ai">Join the waitlist</a>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <span>Conversational experiences will inherit the same qubit-phase analytics as the API.</span>
+        <span><a href="../../index.html">Return to overview</a></span>
+      </div>
+    </footer>
   </body>
 </html>

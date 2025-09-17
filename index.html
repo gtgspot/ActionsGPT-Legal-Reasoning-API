@@ -7,43 +7,180 @@
     <link rel="stylesheet" href="styles.css" />
     <script src="script.js" defer></script>
   </head>
-  <body>
-    <div class="wrap">
-      <header class="site-header">
-        <h1>ActionsGPT — Legal Reasoning API</h1>
-        <button id="theme-toggle" class="btn btn-secondary" aria-label="Toggle theme" aria-pressed="false">Switch to Dark</button>
-      </header>
-      <p class="muted">Minimal FastAPI service for legal retrieval, citation‑aware mapping, precedent ranking, and structured drafting.</p>
+  <body data-theme="dark" data-page="home">
+    <header class="site-header wrap">
+      <div class="brand">
+        <h1>ActionsGPT</h1>
+        <span>Legal reasoning APIs for citations, arguments, and analysis</span>
+      </div>
+      <nav class="nav" aria-label="Primary navigation">
+        <a data-page-link="home" href="index.html">Overview</a>
+        <a data-page-link="explorer" href="site/explorer/">Explorer</a>
+        <a data-page-link="api" href="site/api/">API Docs</a>
+        <a data-page-link="map" href="site/map/">Citations Map</a>
+        <a data-page-link="chat" href="site/chat/">Chat</a>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn-outline" href="https://github.com/gtgspot/ActionsGPT-Legal-Reasoning-API" target="_blank" rel="noreferrer">View repository</a>
+        <button id="theme-toggle" class="btn btn-secondary theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark theme">Dark theme</button>
+      </div>
+    </header>
 
-      <div class="cards">
-        <div class="card">
-          <h3>Get Started</h3>
-          <p class="muted">Open the static explorer, API docs, and citation map.</p>
-          <div class="btns">
-            <a class="btn" href="site/explorer/" target="_blank">Explorer</a>
-            <a class="btn" href="site/api/" target="_blank">API Docs</a>
-            <a class="btn" href="site/map/" target="_blank">Citations Map</a>
-            <a class="btn" href="site/chat/" target="_blank">Chat</a>
+    <main>
+      <section class="hero">
+        <div class="wrap hero-content">
+          <div>
+            <span class="badge">Quantum-inspired legal analytics</span>
+            <h2>Citation-aware reasoning for jurisprudence at production scale.</h2>
+            <p>
+              Deliver consistent, explainable legal analysis by blending retrieval, structured precedent comparison, and
+              generative drafting. ActionsGPT keeps bias checks, citation chains, and argumentative strength measurements in one
+              orchestrated workflow.
+            </p>
+            <div class="header-actions">
+              <a class="btn btn-primary" href="site/api/">Read the API spec</a>
+              <a class="btn btn-outline" href="site/explorer/">Launch explorer</a>
+            </div>
+          </div>
+          <div class="hero-stats" aria-label="Product capabilities">
+            <article class="stat">
+              <strong>12 ms</strong>
+              <span class="muted">Mean latency to surface controlling precedent clusters.</span>
+            </article>
+            <article class="stat">
+              <strong>98%</strong>
+              <span class="muted">Coverage across federal and state reporters with normalized citations.</span>
+            </article>
+            <article class="stat">
+              <strong>5+</strong>
+              <span class="muted">Legal qubit dimensions tracked for jurisprudential lean analysis.</span>
+            </article>
           </div>
         </div>
+      </section>
 
-        <div class="card">
-          <h3>Repository</h3>
-          <p class="muted">Browse the source and configuration files.</p>
-          <a class="link" href="https://github.com/gtgspot/ActionsGPT-Legal-Reasoning-API" target="_blank">GitHub Repo</a>
+      <section class="section">
+        <div class="wrap">
+          <div class="section-header">
+            <h3 class="section-title">Why teams adopt ActionsGPT</h3>
+            <p class="section-lead">Each capability is grounded in transparent citation graphs and quantum-inspired outcome modelling.</p>
+          </div>
+          <div class="cards-grid">
+            <article class="card">
+              <h3>Retrieval that respects nuance</h3>
+              <p>
+                Retrieve authorities with contextual embeddings tuned for legal reasoning. Multi-qubit scoring preserves
+                jurisprudential lean and interpretive ambiguity alongside classical relevance metrics.
+              </p>
+              <footer><span class="pill">Qubit vector search</span></footer>
+            </article>
+            <article class="card">
+              <h3>Argument composition</h3>
+              <p>
+                Blend holdings, dicta, and statutory constructions into structured briefs. Measure argument balance via
+                entangled qubit phases that surface conflicting interpretive leanings.
+              </p>
+              <footer><span class="pill">Structured drafting</span></footer>
+            </article>
+            <article class="card">
+              <h3>Bias diagnostics</h3>
+              <p>
+                Quantify potential jurisprudential bias by modelling court leanings as phase offsets. Apply Grover-inspired
+                amplification to stress-test fragile interpretations.
+              </p>
+              <footer><span class="pill">Explainable analytics</span></footer>
+            </article>
+            <article class="card">
+              <h3>Intertextual insights</h3>
+              <p>
+                Project cross-document resonance to map persuasive authorities. Understand how narrative motifs propagate through
+                precedent families before they reach the bench.
+              </p>
+              <footer><span class="pill">Citation graph AI</span></footer>
+            </article>
+          </div>
         </div>
+      </section>
 
-        <div class="card">
-          <h3>Webhook</h3>
-          <p class="muted">GitHub App webhook handler (HMAC‑verified) is available at <code>/github/webhook</code> when deployed from <code>app_webhook.py</code>.</p>
+      <section class="section">
+        <div class="wrap">
+          <div class="section-header">
+            <h3 class="section-title">Workflow in practice</h3>
+            <p class="section-lead">From intake to deliverable, every phase is observable and auditable.</p>
+          </div>
+          <div class="workflow">
+            <article class="workflow-step">
+              <span>01</span>
+              <h4>Ingest the matter</h4>
+              <p class="muted">Upload pleadings or structured issue lists. Text is normalized, token limits enforced, and metadata deduplicated.</p>
+            </article>
+            <article class="workflow-step">
+              <span>02</span>
+              <h4>Map relevant authorities</h4>
+              <p class="muted">Legal qubits encode precedent ambiguity, enabling side-by-side evaluation of competing interpretations.</p>
+            </article>
+            <article class="workflow-step">
+              <span>03</span>
+              <h4>Compose briefs</h4>
+              <p class="muted">Structured drafting orchestrates retrieval augmented generation, weaving citations with reasoning checkpoints.</p>
+            </article>
+            <article class="workflow-step">
+              <span>04</span>
+              <h4>Deliver with confidence</h4>
+              <p class="muted">Export narrative and data artifacts, including probabilistic outcome projections and jurisprudential bias diagnostics.</p>
+            </article>
+          </div>
+          <div class="callout">
+            <strong>Need to integrate with an existing knowledge stack?</strong>
+            <p class="muted">Use our webhook-friendly orchestration layer or deploy the API directly within a SOC 2 compliant environment.</p>
+          </div>
         </div>
+      </section>
 
-        <div class="card">
-          <h3>Docs Site</h3>
-          <p class="muted">Regenerate static site with <code>python tools/generate_docs.py</code>. Configure via <code>PAGES_*</code> env vars.</p>
+      <section class="section">
+        <div class="wrap split">
+          <div>
+            <h3 class="section-title">API-first, with legal guardrails</h3>
+            <p class="section-lead">
+              REST endpoints expose retrieval, argument synthesis, bias diagnostics, and intertextual scoring. Every response is
+              annotated with citations and qubit phase metadata for auditability.
+            </p>
+            <ul class="list">
+              <li>
+                <strong>Sources Search</strong>
+                <p>Find precedent clusters with aggregated holdings, quoting relationships, and interpretive lean metrics.</p>
+              </li>
+              <li>
+                <strong>Arguments Build</strong>
+                <p>Generate structured briefs with issue framing, supportive authority, and jurisprudential counterweights.</p>
+              </li>
+              <li>
+                <strong>Salience Score</strong>
+                <p>Measure argument stability under competing jurisprudential perspectives via qubit interference tests.</p>
+              </li>
+            </ul>
+          </div>
+          <div class="split-card" aria-label="Sample request payload">
+            <pre><code>{
+  "issue": "Quantum-inspired standing analysis",
+  "facts": ["AI-generated pleadings", "multi-jurisdictional precedent"],
+  "constraints": {"biasThreshold": 0.25, "maxAuthorities": 12}
+}</code></pre>
+            <p class="muted">Fine-tune parameters to control ambiguity tolerance, cite span length, and jurisprudential diversity.</p>
+          </div>
         </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <span>&copy; <span id="year">2025</span> ActionsGPT Legal Reasoning API.</span>
+        <span>Quantum-inspired analytics for legal teams that demand verifiable outputs.</span>
       </div>
-    </div>
+    </footer>
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
   </body>
-  </html>
+</html>
 

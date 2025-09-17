@@ -7,14 +7,59 @@
     <link rel="stylesheet" href="../../styles.css" />
     <script src="../../script.js" defer></script>
   </head>
-  <body>
-    <div class="wrap">
-      <header class="site-header">
+  <body data-theme="dark" data-page="map">
+    <header class="site-header wrap">
+      <div class="brand">
         <h1>Citations Map</h1>
-        <button id="theme-toggle" class="btn btn-secondary" aria-label="Toggle theme" aria-pressed="false">Switch to Dark</button>
-      </header>
-      <p class="muted">Interactive precedent relationships.</p>
-      <p><a class="link" href="../../index.html">Back to home</a></p>
-    </div>
+        <span>Navigate precedent resonance with quantum-inspired scoring</span>
+      </div>
+      <nav class="nav" aria-label="Primary navigation">
+        <a data-page-link="home" href="../../index.html">Overview</a>
+        <a data-page-link="explorer" href="../explorer/">Explorer</a>
+        <a data-page-link="api" href="../api/">API Docs</a>
+        <a data-page-link="map" href="../map/">Citations Map</a>
+        <a data-page-link="chat" href="../chat/">Chat</a>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn-outline" href="https://github.com/gtgspot/ActionsGPT-Legal-Reasoning-API" target="_blank" rel="noreferrer">View repository</a>
+        <button id="theme-toggle" class="btn btn-secondary theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark theme">Dark theme</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="page-intro">
+        <h2>Citation Resonance Map</h2>
+        <p>
+          Visualize how authorities reinforce or counter each other. Qubit phase differentials highlight jurisprudential tension
+          while graph centrality surfaces the opinions most likely to sway outcomes.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h3>Map Layers</h3>
+        <ul>
+          <li>Authority clusters grouped by jurisprudential lean with adjustable ambiguity thresholds.</li>
+          <li>Edge weights representing citation strength, argumentative reliance, and negative treatment.</li>
+          <li>Temporal filters to review doctrinal drift across decades or circuits.</li>
+          <li>Export to JSON, CSV, or PNG for offline review.</li>
+        </ul>
+      </section>
+
+      <section class="content-section">
+        <h3>Interpreting the Map</h3>
+        <p>
+          Color gradients encode the probability of a legal interpretation prevailing under specific jurisprudential biases. Hover
+          details reveal supporting authorities, conflict diagnostics, and recommended counter-citations.
+        </p>
+        <p class="muted">Use alongside the Explorer and API to maintain doctrinal awareness in active litigation.</p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <span>Powered by the same qubit-phase analytics that inform ActionsGPT recommendations.</span>
+        <span><a href="../../index.html">Return to overview</a></span>
+      </div>
+    </footer>
   </body>
 </html>

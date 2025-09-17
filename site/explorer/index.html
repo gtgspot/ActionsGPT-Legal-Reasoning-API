@@ -7,14 +7,59 @@
     <link rel="stylesheet" href="../../styles.css" />
     <script src="../../script.js" defer></script>
   </head>
-  <body>
-    <div class="wrap">
-      <header class="site-header">
-        <h1>Explorer</h1>
-        <button id="theme-toggle" class="btn btn-secondary" aria-label="Toggle theme" aria-pressed="false">Switch to Dark</button>
-      </header>
-      <p class="muted">Prototype explorer interface.</p>
-      <p><a class="link" href="../../index.html">Back to home</a></p>
-    </div>
+  <body data-theme="dark" data-page="explorer">
+    <header class="site-header wrap">
+      <div class="brand">
+        <h1>ActionsGPT Explorer</h1>
+        <span>Visualize citation graphs and jurisprudential qubits</span>
+      </div>
+      <nav class="nav" aria-label="Primary navigation">
+        <a data-page-link="home" href="../../index.html">Overview</a>
+        <a data-page-link="explorer" href="../explorer/">Explorer</a>
+        <a data-page-link="api" href="../api/">API Docs</a>
+        <a data-page-link="map" href="../map/">Citations Map</a>
+        <a data-page-link="chat" href="../chat/">Chat</a>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn-outline" href="https://github.com/gtgspot/ActionsGPT-Legal-Reasoning-API" target="_blank" rel="noreferrer">View repository</a>
+        <button id="theme-toggle" class="btn btn-secondary theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark theme">Dark theme</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="page-intro">
+        <h2>Interactive Explorer</h2>
+        <p>
+          Combine textual embeddings, reporter metadata, and qubit-phase signals to understand how arguments cohere. Layer filters
+          for jurisdiction, procedural posture, and jurisprudential lean to surface the precedent that matters now.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h3>Features</h3>
+        <ul>
+          <li>Adaptive clustering that highlights precedent families by interpretive compatibility.</li>
+          <li>Heatmaps showing ambiguity vectors across multi-qubit legal representations.</li>
+          <li>Temporal playback to view how citation resonance evolves through time.</li>
+          <li>Exportable snapshots to embed in briefs or client updates.</li>
+        </ul>
+      </section>
+
+      <section class="content-section">
+        <h3>Coming Soon</h3>
+        <p class="muted">
+          The explorer is in active development. Connect with the ActionsGPT team to access early builds and provide feedback on
+          the quantum-inspired analytic overlays.
+        </p>
+        <a class="btn btn-primary" href="mailto:research@actionsgpt.ai">Request preview access</a>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <span>Explorer visuals inherit the same theme toggle and accessibility as the main site.</span>
+        <span><a href="../../index.html">Return to overview</a></span>
+      </div>
+    </footer>
   </body>
 </html>
