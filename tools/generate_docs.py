@@ -256,6 +256,39 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
 """
     (assets / "app.js").write_text(app_js)
 
+    analytics_js = """import { createElement } from 'https://esm.sh/react@18';
+import { createRoot } from 'https://esm.sh/react-dom@18/client';
+import { Analytics } from 'https://esm.sh/@vercel/analytics/react';
+
+const mountAnalytics = () => {
+  if (document.getElementById('vercel-analytics')) {
+    return;
+  }
+  const container = document.createElement('div');
+  container.id = 'vercel-analytics';
+  container.style.display = 'none';
+  const body = document.body;
+  if (!body) {
+    return;
+  }
+  body.appendChild(container);
+  try {
+    const root = createRoot(container);
+    root.render(createElement(Analytics));
+  } catch (error) {
+    console.warn('Failed to initialize Vercel Analytics.', error);
+    container.remove();
+  }
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', mountAnalytics, { once: true });
+} else {
+  mountAnalytics();
+}
+"""
+    (assets / "analytics.js").write_text(analytics_js)
+
     # Landing page
     landing = f"""<!doctype html>
     <html lang=\"en\">
@@ -267,6 +300,7 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
         <link rel=\"stylesheet\" href=\"assets/styles.css\" />
         <script defer src=\"assets/config.js\"></script>
         <script defer src=\"assets/app.js\"></script>
+        <script type=\"module\" src=\"assets/analytics.js\"></script>
       </head>
       <body>
         <div class=\"layout\">
@@ -326,6 +360,7 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
         <link rel=\"stylesheet\" href=\"assets/styles.css\" />
         <script defer src=\"assets/config.js\"></script>
         <script defer src=\"assets/app.js\"></script>
+        <script type=\"module\" src=\"assets/analytics.js\"></script>
       </head>
       <body>
         <div class=\"layout\">
@@ -353,6 +388,7 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
         <link rel=\"stylesheet\" href=\"assets/styles.css\" />
         <script defer src=\"assets/config.js\"></script>
         <script defer src=\"assets/app.js\"></script>
+        <script type=\"module\" src=\"assets/analytics.js\"></script>
         <script src=\"https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.umd.min.js\"></script>
       </head>
       <body>
@@ -375,7 +411,7 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
 
     # API docs page (ReDoc)
     api_html = f"""<!doctype html>
-    <html lang=\"en\">\n      <head>\n        <meta charset=\"utf-8\" />\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n        <title>{title} — API</title>\n        <link rel=\"icon\" href=\"data:,\" />\n        <link rel=\"stylesheet\" href=\"assets/styles.css\" />\n      </head>\n      <body>\n        <div class=\"layout\">\n          <header class=\"header\">\n            <div class=\"brand\"><a href=\"./\">{title}</a></div>\n            <nav class=\"btns\">\n              <a class=\"btn primary\" href=\"api.html\">API Docs</a>\n              <a class=\"btn\" href=\"explorer.html\">Explorer</a>\n              <a class=\"btn\" href=\"map.html\">Citations Map</a>\n            </nav>\n          </header>\n          <section class=\"content\">\n            <redoc spec-url=\"openapi.json\" class=\"api\"></redoc>\n          </section>\n        </div>\n\n        <script src=\"https://cdn.jsdelivr.net/npm/redoc/bundles/redoc.standalone.js\"></script>\n      </body>\n    </html>"""
+    <html lang=\"en\">\n      <head>\n        <meta charset=\"utf-8\" />\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n        <title>{title} — API</title>\n        <link rel=\"icon\" href=\"data:,\" />\n        <link rel=\"stylesheet\" href=\"assets/styles.css\" />\n        <script type=\"module\" src=\"assets/analytics.js\"></script>\n      </head>\n      <body>\n        <div class=\"layout\">\n          <header class=\"header\">\n            <div class=\"brand\"><a href=\"./\">{title}</a></div>\n            <nav class=\"btns\">\n              <a class=\"btn primary\" href=\"api.html\">API Docs</a>\n              <a class=\"btn\" href=\"explorer.html\">Explorer</a>\n              <a class=\"btn\" href=\"map.html\">Citations Map</a>\n            </nav>\n          </header>\n          <section class=\"content\">\n            <redoc spec-url=\"openapi.json\" class=\"api\"></redoc>\n          </section>\n        </div>\n\n        <script src=\"https://cdn.jsdelivr.net/npm/redoc/bundles/redoc.standalone.js\"></script>\n      </body>\n    </html>"""
     (site / "api.html").write_text(api_html)
 
     # Chat page
@@ -388,6 +424,7 @@ body {{ font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Ar
         <link rel=\"stylesheet\" href=\"assets/styles.css\" />
         <script defer src=\"assets/config.js\"></script>
         <script defer src=\"assets/app.js\"></script>
+        <script type=\"module\" src=\"assets/analytics.js\"></script>
       </head>
       <body>
         <div class=\"layout\">
