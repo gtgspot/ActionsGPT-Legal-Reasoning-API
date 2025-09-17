@@ -1,19 +1,13 @@
+import asyncio
+import importlib
 import os
+import pkgutil
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from api.routers.admin import router as admin_router
-from api.routers.analysis import router as analysis_router
-from api.routers.canon import router as canon_router
-from api.routers.documents import router as documents_router
-from api.routers.drafts import router as drafts_router
-from api.routers.health import router as health_router
-from api.routers.registries import router as registries_router
-from api.routers.sources import router as sources_router
-from api.routers.uploads import router as uploads_router
-from api.routers.webhooks import router as webhooks_router
+from api.services.training import trigger_training
 
 app = FastAPI(
     title="ActionsGPT — Legal Reasoning API",
@@ -27,19 +21,41 @@ if cors_env and cors_env != "*":
     origins = [o.strip() for o in cors_env.split(",") if o.strip()]
 else:
     origins = ["*"]
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Authorization", "Content-Type"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 # Include routers
-app.include_router(health_router)
-app.include_router(documents_router)
-app.include_router(sources_router)
-app.include_router(analysis_router)
-app.include_router(drafts_router)
-app.include_router(uploads_router)
-app.include_router(webhooks_router)
-app.include_router(canon_router)
-app.include_router(admin_router)
-app.include_router(registries_router)
+
+
+def _include_routers() -> None:
+    from api import routers as routers_pkg
+
+    for _, name, _ in pkgutil.iter_modules(routers_pkg.__path__):
+        module = importlib.import_module(f"{routers_pkg.__name__}.{name}")
+        router = getattr(module, "router", None)
+        if router:
+            app.include_router(router)
+
+
+_include_routers()
+
+
+async def _training_loop() -> None:
+    while True:
+        try:
+            trigger_training()
+        except Exception:
+            pass
+        await asyncio.sleep(3600)
+
+
+@app.on_event("startup")
+async def _startup() -> None:
+    asyncio.create_task(_training_loop())
 
 
 def custom_openapi():
@@ -54,9 +70,9 @@ def custom_openapi():
         routes=app.routes,
     )
     # Enrich with extensions and security matching the provided YAML intent
-    openapi_schema["info"]["summary"] = (
-        "Autonomously identify legal arguments, map legislation, generate AGLC4 citations, and weight issues in fact."
-    )
+    openapi_schema["info"][
+        "summary"
+    ] = "Autonomously identify legal arguments, map legislation, generate AGLC4 citations, and weight issues in fact."
     openapi_schema["x-oaiMeta"] = {
         "name": "ActionsGPT — Legal Reasoning",
         "description_for_model": (

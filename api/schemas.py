@@ -109,7 +109,13 @@ class InputSubmitResponse(BaseModel):
     accepted_bytes: int
 
 
+class FeedbackItem(BaseModel):
+    prompt: str
+    expected: str
+
+
 # ----- Graph / Map Schemas -----
+
 
 class MapNode(BaseModel):
     id: str
@@ -130,9 +136,7 @@ class MapEdge(BaseModel):
     model_config = {
         "populate_by_name": True,  # allow using key 'from' in payload
         "json_schema_extra": {
-            "examples": [
-                {"from": "doc:abc", "to": "evidence-act", "relation": "cites"}
-            ]
+            "examples": [{"from": "doc:abc", "to": "evidence-act", "relation": "cites"}]
         },
     }
 
@@ -143,6 +147,7 @@ class MapGraphResponse(BaseModel):
 
 
 # ----- Webhooks -----
+
 
 class WebhookIngestEvent(BaseModel):
     # Accepts arbitrary structure from external systems
@@ -236,12 +241,14 @@ class ChatRequest(BaseModel):
 
 # ----- Registries -----
 
+
 class RegistrySearchRequest(BaseModel):
     language: str  # python | node | java | go | rust | ruby | php | dotnet
     name: str  # package/module/crate name (use vendor/name for composer)
     group: Optional[str] = None  # for Maven (groupId)
     artifact: Optional[str] = None  # for Maven (artifactId)
     include_fetch: bool = False  # if true, try to fetch JSON/info where available
+
 
 class RegistrySearchResponse(BaseModel):
     registry_id: str
