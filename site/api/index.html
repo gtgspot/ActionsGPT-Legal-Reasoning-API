@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>API Docs — ActionsGPT</title>
+    <link rel="stylesheet" href="../../styles.css" />
+    <script src="../../script.js" defer></script>
+  </head>
+  <body data-theme="dark" data-page="api">
+    <header class="site-header wrap">
+      <div class="brand">
+        <h1>ActionsGPT</h1>
+        <span>Developer reference for legal reasoning endpoints</span>
+      </div>
+      <nav class="nav" aria-label="Primary navigation">
+        <a data-page-link="home" href="../../index.html">Overview</a>
+        <a data-page-link="explorer" href="../explorer/">Explorer</a>
+        <a data-page-link="api" href="../api/">API Docs</a>
+        <a data-page-link="map" href="../map/">Citations Map</a>
+        <a data-page-link="chat" href="../chat/">Chat</a>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn-outline" href="https://github.com/gtgspot/ActionsGPT-Legal-Reasoning-API" target="_blank" rel="noreferrer">View repository</a>
+        <button id="theme-toggle" class="btn btn-secondary theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark theme">Dark theme</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="page-intro">
+        <h2>API Reference</h2>
+        <p>
+          Our REST interface powers quantum-inspired legal analytics. Each response packages citation support, jurisprudential
+          metadata, and interpretive ambiguity scores so downstream workflows stay audit-ready.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h3>Authentication</h3>
+        <p>
+          Requests authenticate with a bearer token generated from your ActionsGPT workspace. Include the token in the
+          <code>Authorization</code> header for every call. Tokens scope to organization data partitions for confidentiality.
+        </p>
+        <pre><code>Authorization: Bearer &lt;workspace-token&gt;</code></pre>
+      </section>
+
+      <section class="content-section">
+        <h3>Endpoints</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Description</th>
+              <th>Key Inputs</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>POST /sources/search</code></td>
+              <td>Semantic + citation aware retrieval for authorities.</td>
+              <td><code>query</code>, <code>jurisdiction</code>, <code>max_results</code></td>
+            </tr>
+            <tr>
+              <td><code>POST /arguments/build</code></td>
+              <td>Structured drafting with issue framing and supporting precedent.</td>
+              <td><code>issue</code>, <code>facts</code>, <code>stance</code></td>
+            </tr>
+            <tr>
+              <td><code>POST /salience/score</code></td>
+              <td>Measure argument robustness against jurisprudential lean scenarios.</td>
+              <td><code>argument_id</code>, <code>bias_threshold</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="content-section">
+        <h3>Response Anatomy</h3>
+        <p>
+          Each response includes citations, normalized reporter data, quantum-inspired ambiguity metrics, and a jurisprudential
+          leaning vector. Use the metadata to visualize interpretive tensions or feed model risk dashboards.
+        </p>
+        <pre><code>{
+  "citation": "410 U.S. 113",
+  "holding": "Defined privacy protections under the Fourteenth Amendment",
+  "probabilities": {
+    "textualist": 0.41,
+    "purposivist": 0.68
+  },
+  "qubitPhase": 0.19,
+  "ambiguity": 0.24
+}</code></pre>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <span>Docs generated from the ActionsGPT orchestration layer.</span>
+        <span><a href="../../index.html">Return to overview</a></span>
+      </div>
+    </footer>
+  </body>
+</html>
