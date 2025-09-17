@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..integrations.http import get_async_client
+from .cache import cached
 
 
 def _load_registries() -> Dict[str, Any]:
@@ -32,7 +33,14 @@ def _fmt(template: Optional[str], **kw: str) -> Optional[str]:
         return template
 
 
-async def resolve_registry(language: str, name: str, group: Optional[str] = None, artifact: Optional[str] = None, include_fetch: bool = False) -> Dict[str, Any]:
+@cached(ttl=3600)
+async def resolve_registry(
+    language: str,
+    name: str,
+    group: Optional[str] = None,
+    artifact: Optional[str] = None,
+    include_fetch: bool = False,
+) -> Dict[str, Any]:
     lang = (language or "").strip().lower()
     cfg = _load_registries().get("registries", {})
     entries = cfg.get(lang) or []
@@ -87,4 +95,3 @@ async def resolve_registry(language: str, name: str, group: Optional[str] = None
 
         results.append(item)
     return {"results": results}
-
