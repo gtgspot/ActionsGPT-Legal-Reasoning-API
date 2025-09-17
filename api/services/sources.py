@@ -15,7 +15,10 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 from urllib.parse import quote_plus, urlparse, urlunparse
 
-from bs4 import BeautifulSoup
+try:  # optional dep
+    from bs4 import BeautifulSoup
+except Exception:  # pragma: no cover - optional dep
+    BeautifulSoup = None
 
 from ..config import ALLOWED_DOMAINS, THROTTLE_DEFAULT, USER_AGENT
 from ..integrations.http import get_async_client
@@ -39,8 +42,18 @@ PROVIDERS: List[Provider] = [
     # Official legislation portals (in-force)
     Provider("VIC Legislation", "legislation", ("www.legislation.vic.gov.au",), ("vic",)),
     Provider("Cth Legislation", "legislation", ("www.legislation.gov.au",), ("cth",)),
-    Provider("NSW Legislation", "legislation", ("www.legislation.nsw.gov.au", "legislation.nsw.gov.au"), ("nsw",)),
-    Provider("QLD Legislation", "legislation", ("www.legislation.qld.gov.au", "www.legislation.qld.gov.au"), ("qld",)),
+    Provider(
+        "NSW Legislation",
+        "legislation",
+        ("www.legislation.nsw.gov.au", "legislation.nsw.gov.au"),
+        ("nsw",),
+    ),
+    Provider(
+        "QLD Legislation",
+        "legislation",
+        ("www.legislation.qld.gov.au", "www.legislation.qld.gov.au"),
+        ("qld",),
+    ),
     Provider("WA Legislation", "legislation", ("www.legislation.wa.gov.au",), ("wa",)),
     Provider("SA Legislation", "legislation", ("www.legislation.sa.gov.au",), ("sa",)),
     Provider("TAS Legislation", "legislation", ("www.legislation.tas.gov.au",), ("tas",)),
@@ -119,9 +132,9 @@ async def enforce_throttle(provider_id: Optional[str]) -> None:
     cfg = _load_providers_config() or {}
     min_delay_ms = THROTTLE_DEFAULT.get("min_delay_ms", 0)
     try:
-        for p in (cfg.get("providers") or []):
+        for p in cfg.get("providers") or []:
             if isinstance(p, dict) and p.get("id") == provider_id:
-                thr = (p.get("throttle") or {})
+                thr = p.get("throttle") or {}
                 md = thr.get("min_delay_ms")
                 if isinstance(md, int):
                     min_delay_ms = md
@@ -180,6 +193,8 @@ async def austlii_search(query: str) -> List[Dict[str, Any]]:
     """Search AustLII HTML results best-effort (no API)."""
     results: List[Dict[str, Any]] = []
     url = f"https://www8.austlii.edu.au/cgi-bin/sinosrch.cgi?query={quote_plus(query)}&results=20"
+    if BeautifulSoup is None:
+        return []
     async with get_async_client({"User-Agent": USER_AGENT}) as c:
         r = await c.get(url)
         if r.status_code != 200:
@@ -206,8 +221,12 @@ async def austlii_search(query: str) -> List[Dict[str, Any]]:
     return results
 
 
-async def ddg_domain_search(query: str, domains: Iterable[str], include_snippets: bool) -> List[Dict[str, Any]]:
+async def ddg_domain_search(
+    query: str, domains: Iterable[str], include_snippets: bool
+) -> List[Dict[str, Any]]:
     """DuckDuckGo HTML fallback per-domain search (no API keys)."""
+    if BeautifulSoup is None:
+        return []
     results: List[Dict[str, Any]] = []
     async with get_async_client({"User-Agent": USER_AGENT}) as c:
         for dom in domains:
@@ -227,8 +246,10 @@ async def ddg_domain_search(query: str, domains: Iterable[str], include_snippets
                         continue
                     snippet = ""
                     if include_snippets:
-                        sn_el = res.select_one("a.result__snippet") or res.select_one("div.result__snippet")
-                        snippet = (sn_el.text.strip() if sn_el and hasattr(sn_el, "text") else "")
+                        sn_el = res.select_one("a.result__snippet") or res.select_one(
+                            "div.result__snippet"
+                        )
+                        snippet = sn_el.text.strip() if sn_el and hasattr(sn_el, "text") else ""
                     results.append(
                         {
                             "source_id": hashlib.md5(href.encode()).hexdigest()[:12],
