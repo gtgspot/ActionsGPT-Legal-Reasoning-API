@@ -1,4 +1,4 @@
-"""Example script demonstrating the MCP filesystem server."""
+"""Demonstrate interacting with the MCP filesystem server via the Agents SDK."""
 
 import asyncio
 import os
