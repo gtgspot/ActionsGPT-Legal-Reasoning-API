@@ -4,3 +4,4 @@ black
 mypy
 PyJWT
 requests
+redis

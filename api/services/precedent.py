@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, cast
 
 from ..config import PRECEDENT_WEIGHTS
 from ..schemas import CaseMeta, CourtLevel
+from .cache import cached
 
 _HIER_CACHE: Optional[Dict[str, Any]] = None
 
@@ -33,6 +34,7 @@ def _load_hierarchy() -> Optional[Dict[str, Any]]:
     except Exception:
         _HIER_CACHE = None
     return _HIER_CACHE
+
 
 NEUTRAL_RE = re.compile(r"\[(?P<year>\d{4})\]\s+(?P<court>[A-Z]{2,6})\s+(?P<num>\d+)")
 
@@ -98,7 +100,9 @@ def compute_precedential_weight(meta: CaseMeta, now_year: int, vic: bool = True)
     t_cap = float(PRECEDENT_WEIGHTS.get("treatment_cap", 0.2))
     t_delta = max(-t_cap, min(t_cap, t_delta))
 
-    j_bonus = 0.05 if (vic and meta.court_level in {"HCA", "VSCA", "VSC", "VCC", "MCV", "VCAT"}) else 0.0
+    j_bonus = (
+        0.05 if (vic and meta.court_level in {"HCA", "VSCA", "VSC", "VCC", "MCV", "VCAT"}) else 0.0
+    )
     year = meta.year or now_year
     age_lambda = float(PRECEDENT_WEIGHTS.get("age_lambda", 0.05))
     age = max(0.0, min(1.0, math.exp(-age_lambda * (now_year - year))))
@@ -126,7 +130,18 @@ def parse_neutral_citation(text: str) -> CaseMeta:
         year = int(m.group("year"))
         court = m.group("court").upper()
         cite = f"[{year}] {court} {m.group('num')}"
-    allowed: set[str] = {"HCA", "HCAFC", "VSCA", "VSC", "VCC", "MCV", "VCAT", "FCA", "FCAFC", "OtherAU"}
+    allowed: set[str] = {
+        "HCA",
+        "HCAFC",
+        "VSCA",
+        "VSC",
+        "VCC",
+        "MCV",
+        "VCAT",
+        "FCA",
+        "FCAFC",
+        "OtherAU",
+    }
     v: Optional[str] = court if (court in allowed) else ("OtherAU" if court else None)
     norm = cast(Optional[CourtLevel], v)
     meta = CaseMeta(neutral_citation=cite, court_level=norm, year=year)
@@ -160,12 +175,16 @@ def build_authority_line(precedents: List[Dict[str, Any]]) -> Dict[str, List[Dic
         else:
             supporting.append(out)
         # If negative treatments present, also mark as counter
-        if any((t.treatment in {"distinguished", "not followed", "overruled"}) for t in (meta.subsequent_treatments or [])):
+        if any(
+            (t.treatment in {"distinguished", "not followed", "overruled"})
+            for t in (meta.subsequent_treatments or [])
+        ):
             counter.append(out)
     return {"governing": governing[:1], "supporting": supporting[:3], "counter": counter[:2]}
 
 
-def parse_case_page(html: str) -> Dict[str, Any]:
+@cached(ttl=3600)
+async def parse_case_page(html: str) -> Dict[str, Any]:
     """Heuristic extraction of panel and ratio/obiter snippets from case HTML.
 
     - Panel: look for lines starting with 'Judges:' or 'Coram:' and split names by ',' or ';'.
