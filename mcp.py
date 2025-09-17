@@ -1,11 +1,53 @@
-"""Demonstrate interacting with the MCP filesystem server via the Agents SDK."""
+"""Demonstrate interacting with the MCP filesystem server via the Agents SDK.
+
+The helper in :func:`prepare_sample_directory` exposes a curated set of
+repository files—such as ``README.md`` and ``config/precedent_hierarchy.yml``—
+via symbolic links. This lets the example agent read real project artifacts
+without copying them, so answers can reference the latest repository state.
+"""
 
 import asyncio
 import os
 import shutil
+from pathlib import Path
 
 from agents import Agent, Runner, trace
 from agents.mcp import MCPServer, MCPServerStdio
+
+
+def prepare_sample_directory(base_dir: str) -> str:
+    """Ensure the MCP example references real repository files.
+
+    The MCP filesystem server reads from a dedicated ``sample_files`` directory.
+    To keep the example relevant, populate that directory with symbolic links to
+    a few authoritative project resources. If the platform does not support
+    symlinks, fall back to copying the source files.
+    """
+
+    repo_root = Path(base_dir)
+    sample_dir = repo_root / "sample_files"
+    sample_dir.mkdir(exist_ok=True)
+
+    sources = {
+        "README.md": repo_root / "README.md",
+        "canon.json": repo_root / "data" / "canon.json",
+        "precedent_hierarchy.yml": repo_root / "config" / "precedent_hierarchy.yml",
+    }
+
+    for link_name, target_path in sources.items():
+        if not target_path.exists():
+            raise FileNotFoundError(f"Missing required sample file: {target_path}")
+
+        link_path = sample_dir / link_name
+        if link_path.exists() or link_path.is_symlink():
+            link_path.unlink()
+
+        try:
+            link_path.symlink_to(target_path)
+        except (OSError, NotImplementedError, AttributeError):
+            shutil.copy2(target_path, link_path)
+
+    return str(sample_dir)
 
 
 async def run(mcp_server: MCPServer):
@@ -36,7 +78,7 @@ async def run(mcp_server: MCPServer):
 
 async def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    samples_dir = os.path.join(current_dir, "sample_files")
+    samples_dir = prepare_sample_directory(current_dir)
 
     async with MCPServerStdio(
         params={
