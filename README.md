@@ -15,144 +15,238 @@ Minimal, typed FastAPI service for legal reasoning primitives: ingest, structure
 - Static docs site: landing, explorer, citations map, API docs, knowledge base
   - Chat Q&A page (simple chat UI backed by /chat)
 
-## Quick Start (local)
+# Quantum‑Inspired Model of Legal Conditions and Outcomes (for Project Agent)
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-export EXPECT_API_KEY=dev-key   # require X-API-Key header
-make run-local                  # uvicorn app:app --reload --port 8000
-```
+> **Pedagogical aim:** Introduce quantum and mathematical concepts as needed; assume no prior knowledge.
+> **Forward‑looking aim:** Provide a framework for quantifying ambiguity, intertextuality, and jurisprudential leaning; show how known quantum algorithms can model court bias and inconsistency.
 
-Health (open):
-```bash
-curl http://localhost:8000/health
-```
+---
 
-Secured endpoint (use your key):
-```bash
-curl -H 'X-API-Key: dev-key' \
-     -H 'Content-Type: application/json' \
-     -d '{"title":"Local Doc","raw_text":"Evidence Act 2008 (Vic) s 138"}' \
-     http://localhost:8000/documents/ingest
-```
+## Abstract
 
-## Makefile Targets
+I formalise a quantum‑inspired representation of legal conditions and outcomes using **qubits**. Multiple qubits model complex, probabilistic interpretations of rules; **entanglement** models intertextual dependence (cross‑references, definitions, precedent). I define metrics for **ambiguity**, **intertextuality**, and **inconsistency** and show how **phase** encodes secondary characteristics (e.g., jurisprudential leanings). Leveraging known quantum algorithms (amplitude amplification, phase estimation), I show how to incorporate potential court‑specific leanings into the probability that a legal interpretation will be deemed valid. I discuss practical limits and how **generative AI** can parameterise the model from statutory and case text. The framework is descriptive (for analysis) and strategic (for litigation planning), not prescriptive of judicial behaviour.
 
-- `make dev`          create `.venv` only
-- `make bootstrap`    install runtime + dev tools (uses requirements*.txt)
-- `make run-local`    run uvicorn with `EXPECT_API_KEY` (defaults to `dev-key`)
-- `make check`        ruff + black --check + mypy + pytest
-- `make test`         run pytest
-- `make docker-build` build Docker image
-- `make docker-up`    run docker compose (ports 8000:8000)
-- `make docker-down`  stop compose
+---
 
-## Docker
+## 1. Introduction and Contributions
 
-```bash
-docker compose up --build
-# or
-make docker-up
-```
+**Problem.** Legal rules are often under‑determinate. Courts resolve disputes by weighing text, purpose, precedent, evidentiary burdens, and institutional norms. We need a quantitative, compositional model that (i) isolates where ambiguity lives, (ii) quantifies intertextual reliance, and (iii) makes the role of jurisprudential leanings explicit.
 
-Environment: `EXPECT_API_KEY` (defaults to `dev-key` in compose). Access `http://localhost:8000`.
+**Solution sketch.**
 
-## Tests & Tooling
+* Represent each legal proposition (condition/exception/outcome) as a **qubit** $|\psi\rangle = \alpha\,|0\rangle + \beta\,|1\rangle$, where $|1\rangle$ denotes satisfaction/validity and $|0\rangle$ non‑satisfaction/invalidity. Probabilities are $|\alpha|^2, |\beta|^2$.
+* Compose complex rules with multi‑qubit systems; model cross‑references and precedent via **correlations/entanglement** in the joint state $\rho$.
+* Encode **jurisprudential leaning** via the **phase** of amplitudes (Bloch sphere angle $\phi$), enabling interference between competing interpretive styles.
+* Quantify:
 
-```bash
-source .venv/bin/activate
-pip install -r requirements-dev.txt
-ruff check .
-black --check .
-mypy .
-pytest -q
-```
+  * **Ambiguity** via interpretive entropy and coherence.
+  * **Intertextuality** via quantum mutual information.
+  * **Inconsistency** via phase‑conflict indices (reliance on mutually incompatible leanings).
+* Use **amplitude amplification** to model bias‑aligned outcome probabilities; use **phase estimation** to infer leanings from observed decisions.
 
-## Docs Site (static)
+**Contributions.** (C1) A formal syntax/semantics for quantum‑inspired legal modelling; (C2) metrics for ambiguity/intertextuality/inconsistency; (C3) algorithmic treatment of court leanings; (C4) a practical pipeline using generative AI to estimate parameters.
 
-Point the explorer to your API and build:
+---
 
-```bash
-export PAGES_API_BASE=http://localhost:8000
-python tools/generate_docs.py
-python -m http.server -d site 8080
-# open http://localhost:8080
-# use Chat at /chat.html
-```
+## 2. Minimal Quantum Background (Pedagogical)
 
-Branding via repo variables (for CI/Pages): `PAGES_SITE_TITLE`, `PAGES_PRIMARY_COLOR`, `PAGES_ACCENT_COLOR`, `PAGES_API_BASE`. Custom domain: set `PAGES_CUSTOM_DOMAIN` and a matching DNS CNAME (e.g., `docs.legis.com.au` → `gtgspot.github.io`).
+**Qubit.** A unit vector $|\psi\rangle = \alpha|0\rangle + \beta|1\rangle$, with $|\alpha|^2 + |\beta|^2 = 1$. The **Bloch sphere** parameterises pure states by two angles: $|\psi\rangle = \cos(\tfrac{\theta}{2})|0\rangle + e^{i\phi}\sin(\tfrac{\theta}{2})|1\rangle$. Here $\theta$ controls the baseline probability of satisfaction; $\phi$ will encode jurisprudential leaning.
 
-## Package Registries API
+**Measurement.** Measuring in the computational basis yields 0 or 1 with those probabilities. In our model, this corresponds to a legal fact‑finder adjudicating a condition as not satisfied/satisfied.
 
-Resolve package/module pages across common ecosystems; optionally fetch basic JSON metadata when available.
+**Multi‑qubit states.** A system of $n$ qubits is described by a unit vector in $\mathbb{C}^{2^n}$ or a **density matrix** $\rho$ (to model uncertainty/mixed evidence). **Entanglement** is non‑separability: $\rho \neq \rho_A \otimes \rho_B$.
 
-- Endpoint: `POST /registries/search`
-- Body:
-  - `language`: `python | node | java | go | rust | ruby | php | dotnet`
-  - `name`: package/module name (Composer uses `vendor/package`)
-  - `group` and `artifact` (optional): for Maven Central artifact pages
-  - `include_fetch` (optional): `true` to attempt a JSON fetch from the registry API (best‑effort)
+**Elementary gates.**
 
-Examples
+* $X$ (NOT) flips 0↔1 (negation).
+* $R_y(\gamma)$ rotates probabilities (update by new evidence).
+* $R_z(\lambda)$ shifts phase (update in jurisprudential leaning).
+* Controlled operations (e.g., **CNOT**) implement dependencies (exceptions/defences that trigger conditionally).
 
-```bash
-# PyPI
-curl -H 'X-API-Key: dev-key' \
-     -H 'Content-Type: application/json' \
-     -d '{"language":"python","name":"requests","include_fetch":true}' \
-     http://localhost:8000/registries/search | jq
+---
 
-# npm
-curl -H 'X-API-Key: dev-key' \
-     -H 'Content-Type: application/json' \
-     -d '{"language":"node","name":"lodash","include_fetch":true}' \
-     http://localhost:8000/registries/search | jq
+## 3. Formal Model
 
-# Maven Central (web URL)
-curl -H 'X-API-Key: dev-key' \
-     -H 'Content-Type: application/json' \
-     -d '{"language":"java","group":"org.apache.commons","artifact":"commons-lang3"}' \
-     http://localhost:8000/registries/search | jq
+### 3.1 Legal propositions as qubits
 
-# Composer/Packagist
-curl -H 'X-API-Key: dev-key' \
-     -H 'Content-Type: application/json' \
-     -d '{"language":"php","name":"symfony/console","include_fetch":true}' \
-     http://localhost:8000/registries/search | jq
+Let $p$ be a legal proposition (e.g., “Condition C holds”, “Defence D applies”). Model it as a qubit state
 
-# NuGet
-curl -H 'X-API-Key: dev-key' \
-     -H 'Content-Type: application/json' \
-     -d '{"language":"dotnet","name":"Newtonsoft.Json","include_fetch":true}' \
-     http://localhost:8000/registries/search | jq
-```
+$$
+|\psi_p\rangle \,=\, \alpha_p\,|0\rangle + e^{i\phi_p}\,\beta_p\,|1\rangle,\quad |\alpha_p|^2+|\beta_p|^2=1.
+$$
 
-Allowlisted registries include: PyPI, npm, Yarn, Maven Central, Go proxy/pkg.go.dev, crates.io, RubyGems, Packagist, and NuGet (see `config/registries.yml` and `api/config.py`).
+* $|1\rangle$: proposition holds (satisfied/valid).
+* $\phi_p$: jurisprudential “phase” (see §3.5) capturing the leaning of how $p$ is made true (textualist/purposive/precedent/rights‑centric, etc.).
 
-## OpenAPI & Security
+**Evidence updates.** New evidence rotates $|\psi_p\rangle$ via $R_y(\gamma)$. Changes in the interpretive frame (e.g., court emphasises purpose) rotate phase via $R_z(\lambda)$.
 
-- OpenAPI is served from the app with enriched metadata and `ApiKeyAuth` security scheme (header `X-API-Key`).
-- Set `EXPECT_API_KEY` to enable key enforcement; unset to disable.
+### 3.2 Composition of rules
 
-## Environment Variables
+Let **AND**, **OR**, **NOT** be implemented by observables on the joint system.
 
-Copy `.env.example` and set values appropriate to your deployment.
+* **Conjunction (AND).** For conditions $p_1,\dots,p_k$, define the outcome observable $\Pi_{\text{AND}} = |1\ldots1\rangle\langle1\ldots1|$. The probability that all hold equals $\mathrm{Tr}(\rho\,\Pi_{\text{AND}})$.
+* **Disjunction (OR).** $\Pi_{\text{OR}} = I - |0\ldots0\rangle\langle0\ldots0|$.
+* **Negation (NOT).** Apply $X$ to the relevant qubit.
 
-- Core
-  - `EXPECT_API_KEY`: require `X-API-Key` header on protected routes.
-  - `CORS_ALLOW_ORIGINS`: comma-separated origins for browsers.
-  - `API_BASE_URL`: OpenAPI server URL (e.g., `https://api.yourdomain.com`).
-  - `ALLOWED_DOMAINS_CSV`: extend outbound allowlist.
-- GitHub App (optional; never commit secrets)
-  - `GITHUB_APP_ID`, `GITHUB_APP_CLIENT_ID` (public identifiers)
-  - `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_WEBHOOK_SECRET` (secrets)
-  - `GITHUB_APP_PRIVATE_KEY` (server-to-server auth; PEM)
-- Docs site (optional)
-  - `PAGES_SITE_TITLE`, `PAGES_PRIMARY_COLOR`, `PAGES_ACCENT_COLOR`, `PAGES_API_BASE`, `PAGES_CUSTOM_DOMAIN`.
+**Exceptions/defences.** Model a defence $d$ that defeats condition $c$ as a controlled‑NOT from $d$ to the outcome qubit (or a controlled phase that cancels the contribution of $c$). This captures non‑monotonic structure.
 
-Security note: if any secret was posted publicly, rotate it immediately in the provider and update the environment.
+**Burdens/standards.** Represent standards (balance of probabilities, beyond reasonable doubt) as threshold observables on posterior probabilities, or as required rotation magnitude $\gamma$ before measurement (§3.4).
+
+### 3.3 Intertextual dependence and precedent as entanglement
+
+Cross‑references and definitional chains induce correlations. Let $A,B$ index two instruments (e.g., statute and delegated rule), with reduced states $\rho_A,\rho_B$. Define **intertextual dependence** by the **quantum mutual information**:
+
+$$
+I(A\!:\!B) = S(\rho_A) + S(\rho_B) - S(\rho_{AB}),\quad S(\rho)= -\mathrm{Tr}(\rho\log\rho).
+$$
+
+High $I(A\!:\!B)$ indicates strong reliance of one text’s interpretation on the other (see §4.2).
+
+### 3.4 Outcomes and evidential updates
+
+Let $o$ be the outcome qubit (e.g., “liability established”). The global state $\rho$ evolves as evidence is admitted:
+
+$$
+\rho \mapsto U_E\,\rho\,U_E^\dagger,\quad U_E = \prod_j R_y^{(p_j)}(\gamma_j) \prod_k \text{(controlled gates)}.
+$$
+
+The adjudicated probability of liability is $\Pr[o{=}1] = \mathrm{Tr}(\rho\,\Pi_o)$, where $\Pi_o = |1\rangle\langle1|$ on the outcome register.
+
+### 3.5 Jurisprudential phase
+
+Let $\mathcal{J}$ be a vector of jurisprudential features (e.g., text, purpose, precedent, rights). Map it to a phase $\phi$ via a learned embedding $\Phi: \mathbb{R}^m \to [0,2\pi)$. Then $R_z(\lambda)$ shifts $\phi$ to reflect institutional leanings (court‑ or judge‑specific). Interference between qubits with different $\phi$ models how competing interpretive styles amplify/cancel.
+
+---
+
+## 4. Metrics: Ambiguity, Intertextuality, Inconsistency
+
+### 4.1 Ambiguity
+
+We separate **semantic ambiguity** (intrinsic) from **epistemic dispersion** (across interpreters).
+
+1. **Interpretive entropy (intrinsic):** For a qubit $|\psi\rangle$, the measurement entropy
+   $H(\psi) = -p\log p -(1-p)\log (1-p),\quad p=|\beta|^2.$
+   High $H$ indicates under‑determination at the level of the proposition.
+
+2. **Cross‑interpreter dispersion (epistemic):** Given a distribution of states $\{w_i, |\psi_i\rangle\}$ representing different interpreters, define the mean density matrix $\bar\rho = \sum_i w_i |\psi_i\rangle\langle\psi_i|$. Then define
+   $A_{\text{disp}} = S(\bar\rho).$
+   This rises as interpreters disagree about both probabilities and phases.
+
+3. **Coherence (readiness to interfere):** Off‑diagonal magnitude $C(\rho) = \sum_{i\neq j} |\rho_{ij}|$ ($l_1$ coherence). High coherence means phase‑sensitive effects matter—jurisprudential leanings will affect outcomes.
+
+### 4.2 Intertextuality
+
+For sub‑systems $A,B$ encoding linked instruments or provisions, use **quantum mutual information** $I(A\!:\!B)$ (§3.3). Optionally decompose into **classical correlation** and **entanglement of formation** $E_F$ to separate mere correlation from genuine non‑separability.
+
+Define a **Rule Intertextuality Index**:
+$RII(A,B) = \frac{I(A\!:\!B)}{\min\{S(\rho_A), S(\rho_B)\} + \varepsilon}.$
+This normalises dependence to each rule’s intrinsic uncertainty.
+
+### 4.3 Inconsistency via phase conflict
+
+Let $\phi_i$ denote phase for proposition $p_i$ materially relied on for outcome $o$. Define pairwise **phase conflict**
+$\Delta_{ij} = 1 - \cos(\phi_i - \phi_j).$
+Weight by their participation strengths $w_i, w_j$ (e.g., Shapley values or gradient‑based attributions on $\Pr[o{=}1]$). Define the **Inconsistency Index**
+$\mathrm{INC}(o) = \sum_{i<j} w_i w_j\,\Delta_{ij}.$
+High $\mathrm{INC}$ signals an outcome that leans simultaneously on incompatible jurisprudential characteristics.
+
+---
+
+## 5. Modelling Court Leanings with Quantum Algorithms
+
+### 5.1 Leaning as a phase operator
+
+Associate a court‑specific operator $B$ that applies phase shifts reflecting institutional preferences: $B = \prod_{i} R_z^{(p_i)}(\lambda_i)$. Pre‑measurement application of $B$ yields bias‑adjusted outcome probabilities $\Pr_B[o{=}1].$
+
+### 5.2 Amplitude amplification (Grover‑style)
+
+Define a predicate (oracle) $\mathcal{O}$ that marks states consistent with the court’s leanings (e.g., purposive‑aligned interpretations of pivotal provisions). One step of amplitude amplification rotates probability mass toward marked states. After $k$ iterations, the success probability is approximately
+$\Pr_k \approx \sin^2\big((2k+1)\theta\big), \quad \sin^2\theta = P_0,$
+where $P_0$ is the initial mass on marked states. This models how a leaning can systematically increase the likelihood of certain interpretations being accepted.
+
+### 5.3 Phase estimation for inference
+
+Given observed sequences of decisions, one can (in principle) infer the underlying $\phi$ (jurisprudential phase) by **phase estimation**: choose an evolution $U$ whose eigenphase carries $\phi$, then estimate $\phi$ from measurement statistics. In practice, we approximate via maximum likelihood over the embedding $\Phi$ (see §6).
+
+---
+
+## 6. Worked Toy Example
+
+Consider a simplified charge requiring **(C1)** a statutory condition (e.g., prohibited act), **(C2)** mental element, with an **exception** **(D)** (e.g., reasonable excuse). Let the outcome be liability **(O)**.
+
+1. **Encode.** Assign qubits $q_{C1}, q_{C2}, q_D, q_O$. Initialise $|\psi_{C1}\rangle, |\psi_{C2}\rangle$ from evidence ($R_y$ rotations). Initialise $|\psi_D\rangle$ from defence submissions.
+2. **Compose.** Implement $O = C1 \land C2 \land \neg D$ via projectors and a controlled‑NOT from $D$ to $O$ (defeater).
+3. **Phases.** Let $\phi_{C1}$ skew textual, $\phi_{C2}$ rights‑centric (due process), $\phi_D$ purposive. Compute $\mathrm{INC}(O)$ to test whether the outcome relies on incompatible leanings.
+4. **Bias operator.** Apply court operator $B$ (e.g., $R_z^{(\cdot)}$ emphasising purposive readings), recompute $\Pr_B[O{=}1]$. This gives a bias‑adjusted forecast and highlights which provisions are most sensitive to leanings.
+5. **Diagnostics.** Compute **Ambiguity** $H(\psi_{C2})$ to see if mens rea is under‑determined; compute **Intertextuality** between the definitional clause in $C1$ and delegated regulation $R$ to expose dependence.
+
+**Strategic note.** If $RII(C1,R)$ is high, challenge the delegated instrument’s role (ultra vires/interpretive misstep). If $A_{\text{disp}}$ is high for $C2$, press for strict proof and expose the Crown’s failure to discharge the standard.
+
+---
+
+## 7. Practical Limits and a Generative‑AI Pipeline
+
+### 7.1 Limits
+
+* **Metaphor vs mechanism.** The framework is *inspired* by quantum formalisms; no claim of physical superposition in law.
+* **Parameter identifiability.** Phases (leanings) and amplitudes (probabilities) may be confounded without sufficient observations.
+* **Non‑unitary realities.** Real litigation includes non‑unitary steps (exclusions, discretionary rulings). We approximate with CPTP maps (noise channels) if needed.
+* **Data availability.** Reported decisions may under‑represent negotiations/withdrawals, biasing estimates.
+
+### 7.2 Pipeline (estimating amplitudes and phases)
+
+1. **Text parsing.** Use a legal‑tuned LLM to extract propositions (conditions, exceptions), cross‑references, burdens, and standards from statutes, regulations, and cases.
+2. **Graph build.** Construct a rule graph (nodes: propositions; edges: intertextual links). Initialise qubits per node.
+3. **Evidence mapping.** From case facts, map items to $R_y$ rotations (likelihood contributions) using calibrated evidence models.
+4. **Jurisprudence embedding.** Build a taxonomy (textual, purposive, precedent‑centric, rights‑centric). Train an embedding $\Phi$ that maps textual features of judicial reasons to a phase $\phi$. Calibrate by fitting to historical outcomes via maximum likelihood.
+5. **Computation.** Evaluate $H, A_{\text{disp}}, C(\rho), I(A\!:\!B), RII, INC$ and perform bias‑adjusted forecasts with operator $B$.
+6. **Explainability.** Attribute outcome probability to propositions (e.g., Shapley on $\Pr[o{=}1]$); report which provisions dominate ambiguity and inconsistency.
+
+### 7.3 Governance and ethics
+
+* Document mappings from legal sources; preserve audit trails (who/when/what texts).
+* Avoid automating normative judgments; use metrics as diagnostic aids to focus submissions (e.g., where ambiguity/intertextuality is excessive or unlawful).
+* Align with rights instruments by testing whether bias‑adjusted outcomes degrade fairness (e.g., probe $\mathrm{INC}$ spikes when rights phases are down‑weighted).
+
+---
+
+## 8. Discussion and Future Work
+
+1. **Richer connectives.** Model burdens of proof as asymmetric thresholds; encode presumptions as prior rotations.
+2. **Noise models.** Add dephasing to represent loss of jurisprudential coherence under time/resource pressure.
+3. **Learning from sparse data.** Hierarchical priors sharing information across courts/bench compositions.
+4. **Hybrid classical‑quantum computing.** Use classical optimisation to fit $\Phi$, then quantum‑style simulators for sensitivity analyses.
+5. **Validation.** Compare forecasts to held‑out decisions; stress‑test with synthetic variations of facts.
+
+---
+
+## 9. Glossary (plain‑English)
+
+* **Qubit:** A two‑level mathematical object—here, a way to encode uncertain propositions with both probability and a “leaning” (phase).
+* **Phase:** A circular parameter (angle) encoding *how* a proposition tends to be satisfied (e.g., textual vs purposive reasoning). Phases can add or cancel.
+* **Entanglement:** Statistical dependence that cannot be factored; models tight cross‑text reliance.
+* **Amplitude amplification:** A procedure that increases probability on “favoured” interpretations marked by an oracle (e.g., a court’s preferences).
+
+---
+
+## 10. Appendix: Notation & Quick Recipes
+
+**State encoding.** For proposition $p$, set $p=1$ if satisfied; initialise by $R_y(\gamma)$ with $\gamma = 2\arcsin(\sqrt{p})$. Set phase by $R_z(\phi)$.
+
+**AND/OR measurement.** Use projectors $\Pi_{\text{AND}}$, $\Pi_{\text{OR}}$ on the joint register; compute probabilities via $\mathrm{Tr}(\rho\Pi)$.
+
+**Metrics summary.**
+
+* Ambiguity: $H(\psi)$, $A_{\text{disp}}$, $C(\rho)$.
+* Intertextuality: $I(A\!:\!B)$, $RII$.
+* Inconsistency: $\mathrm{INC}(o)$ via phase conflicts.
+
+**Strategy prompts (diagnostic use).**
+
+* *Where is the Crown’s case most ambiguous?* → Maximise $H(\psi_p)$ over pivotal propositions.
+* *Which delegated instrument over‑drives the outcome?* → Identify edges with highest $RII$; press ultra vires or misinterpretation.
+* *Is the outcome jurisprudentially unstable?* → Check $\mathrm{INC}(o)$ and explain conflicts in submissions.
+
 
 ## License
 
