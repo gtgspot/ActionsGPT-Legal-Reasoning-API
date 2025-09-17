@@ -10,6 +10,7 @@ from api.routers.canon import router as canon_router
 from api.routers.documents import router as documents_router
 from api.routers.drafts import router as drafts_router
 from api.routers.health import router as health_router
+from api.routers.quantum import router as quantum_router
 from api.routers.registries import router as registries_router
 from api.routers.sources import router as sources_router
 from api.routers.uploads import router as uploads_router
@@ -39,6 +40,7 @@ app.include_router(health_router)
 app.include_router(documents_router)
 app.include_router(sources_router)
 app.include_router(analysis_router)
+app.include_router(quantum_router, prefix="/quantum")
 app.include_router(drafts_router)
 app.include_router(uploads_router)
 app.include_router(webhooks_router)
