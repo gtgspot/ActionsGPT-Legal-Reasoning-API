@@ -94,3 +94,32 @@ def test_sources_search_pagination():
     assert data.get("page") == 2
     assert data.get("per_page") == 1
     assert len(data.get("results", [])) == 1
+
+
+def test_sources_fetch_authenticated_html(monkeypatch):
+    html = "<html><body>Secret</body></html>"
+    calls = {"count": 0, "strip_html": None}
+
+    async def fake_fetch_url(url, auth_header, *, strip_html=True):
+        calls["count"] += 1
+        calls["strip_html"] = strip_html
+        assert auth_header == "Bearer secret"
+        return {
+            "uri": url,
+            "content_text": html if not strip_html else "stripped",
+            "detected_type": "html",
+            "captured_at": "2024-01-01T00:00:00Z",
+        }
+
+    monkeypatch.setattr("api.routers.sources.fetch_url", fake_fetch_url)
+
+    r = client.post(
+        "/sources/fetch",
+        json={"urls": ["https://example.com/private"], "strip_html": False},
+        headers={"Authorization": "Bearer secret"},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["items"][0]["content_text"] == html
+    assert calls["count"] == 1
+    assert calls["strip_html"] is False

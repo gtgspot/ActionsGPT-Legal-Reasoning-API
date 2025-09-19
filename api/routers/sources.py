@@ -2,8 +2,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 
-from ..config import USER_AGENT
-from ..integrations.http import fetch_url, get_async_client
+from ..integrations.http import fetch_url
 from ..schemas import FetchRequest, SourcesSearchRequest
 from ..security import api_key_guard
 from ..services.sources import search_sources_service
@@ -39,11 +38,6 @@ async def search_sources(body: SourcesSearchRequest):
 async def fetch_sources(req: FetchRequest, authorization: Optional[str] = Header(default=None)):
     items = []
     for u in req.urls:
-        item = await fetch_url(str(u), authorization)
-        if not req.strip_html and item["detected_type"] == "html":
-            async with get_async_client({"User-Agent": USER_AGENT}) as c:
-                r = await c.get(str(u))
-                r.raise_for_status()
-                item["content_text"] = r.text[:200000]
+        item = await fetch_url(str(u), authorization, strip_html=req.strip_html)
         items.append(item)
     return {"items": items}
