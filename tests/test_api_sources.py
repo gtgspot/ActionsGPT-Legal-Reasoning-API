@@ -94,3 +94,46 @@ def test_sources_search_pagination():
     assert data.get("page") == 2
     assert data.get("per_page") == 1
     assert len(data.get("results", [])) == 1
+
+
+def test_sources_fetch_authenticated_html(monkeypatch):
+    html = "<html><body>Secret</body></html>"
+    captured_headers = {}
+
+    async def fake_fetch_url(url, auth_header):
+        assert auth_header == "Bearer secret"
+        return {
+            "uri": url,
+            "content_text": "stripped",
+            "detected_type": "html",
+            "captured_at": "2024-01-01T00:00:00Z",
+        }
+
+    class CaptureAsyncClient:
+        def __init__(self, headers=None):
+            captured_headers["headers"] = dict(headers or {})
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def get(self, url):
+            return FakeResponse(200, html)
+
+    def fake_get_async_client(headers=None):
+        return CaptureAsyncClient(headers)
+
+    monkeypatch.setattr("api.routers.sources.fetch_url", fake_fetch_url)
+    monkeypatch.setattr("api.routers.sources.get_async_client", fake_get_async_client)
+
+    r = client.post(
+        "/sources/fetch",
+        json={"urls": ["https://example.com/private"], "strip_html": False},
+        headers={"Authorization": "Bearer secret"},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["items"][0]["content_text"] == html
+    assert captured_headers["headers"].get("Authorization") == "Bearer secret"

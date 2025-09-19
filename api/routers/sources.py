@@ -2,7 +2,6 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 
-from ..config import USER_AGENT
 from ..integrations.http import fetch_url, get_async_client
 from ..schemas import FetchRequest, SourcesSearchRequest
 from ..security import api_key_guard
@@ -41,7 +40,10 @@ async def fetch_sources(req: FetchRequest, authorization: Optional[str] = Header
     for u in req.urls:
         item = await fetch_url(str(u), authorization)
         if not req.strip_html and item["detected_type"] == "html":
-            async with get_async_client({"User-Agent": USER_AGENT}) as c:
+            headers = {}
+            if authorization:
+                headers["Authorization"] = authorization
+            async with get_async_client(headers or None) as c:
                 r = await c.get(str(u))
                 r.raise_for_status()
                 item["content_text"] = r.text[:200000]
