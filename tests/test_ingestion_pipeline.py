@@ -127,6 +127,69 @@ def test_combine_interpretations_coherence_boosts_probability():
     assert conflicting.probability <= 1
 
 
+def test_combine_interpretations_respects_total_plausibility():
+    base = [
+        InterpretationMeasurement(
+            axis="textual",
+            plausibility=0.6,
+            phase=0.1,
+            phase_hint="textualist",
+            provenance=_test_provenance("quantum", "textual"),
+        ),
+        InterpretationMeasurement(
+            axis="purposive",
+            plausibility=0.4,
+            phase=0.1,
+            phase_hint="purposive",
+            provenance=_test_provenance("quantum", "purposive"),
+        ),
+    ]
+
+    scaled = [
+        InterpretationMeasurement(
+            axis=item.axis,
+            plausibility=item.plausibility * 0.4,
+            phase=item.phase,
+            phase_hint=item.phase_hint,
+            provenance=item.provenance,
+        )
+        for item in base
+    ]
+
+    rich = combine_interpretations(base, "VSC")
+    attenuated = combine_interpretations(scaled, "VSC")
+
+    assert attenuated.court == "VSC"
+    assert 0 <= attenuated.probability <= rich.probability
+
+
+def test_combine_interpretations_accepts_custom_phase():
+    results = [
+        InterpretationMeasurement(
+            axis="textual",
+            plausibility=0.7,
+            phase=0.2,
+            phase_hint=None,
+            provenance=_test_provenance("quantum", "textual"),
+        ),
+        InterpretationMeasurement(
+            axis="rights",
+            plausibility=0.5,
+            phase=0.9,
+            phase_hint="rights",
+            provenance=_test_provenance("quantum", "rights"),
+        ),
+    ]
+
+    custom = combine_interpretations(results, math.pi / 3)
+    reference = combine_interpretations(results, "VSCA")
+
+    assert custom.court == "custom"
+    assert 0 <= custom.probability <= 1
+    assert 0 <= custom.inconsistency <= 1
+    assert custom.probability != reference.probability
+
+
 def test_intertextuality_and_ambiguity_scores():
     text = "See Smith v The Queen [2017] HCA 5 for guidance; arguably the ratio is narrow."
     inter = intertextuality_score(text, ["smith-v-the-queen-[2017]-hca-5"])

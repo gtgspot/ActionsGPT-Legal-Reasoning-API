@@ -1353,12 +1353,19 @@ def combine_interpretations(
         court_label = court_phase
         bias = COURT_PHASE_BIAS.get(court_phase.upper(), 0.5)
         phase_reference = math.pi * bias
-        prov = _prov("quantum", "combine_interpretations", court=court_label, phase=round(phase_reference, 3), bias=round(bias, 3))
     else:
         court_label = "custom"
-        bias = 0.5
         phase_reference = float(court_phase)
-        prov = _prov("quantum", "combine_interpretations", court=court_label, phase=round(phase_reference, 3), bias=round(bias, 3))
+        bias = 0.5 + 0.25 * math.cos(phase_reference)
+        bias = max(0.25, min(0.75, bias))
+
+    prov = _prov(
+        "quantum",
+        "combine_interpretations",
+        court=court_label,
+        phase=round(phase_reference, 3),
+        bias=round(bias, 3),
+    )
 
     valid_results = [res for res in results if res.plausibility > 0]
     if not valid_results:
@@ -1385,12 +1392,15 @@ def combine_interpretations(
     phase_support: Dict[str, float] = {}
     aligned_phases: List[float] = []
     amplitude_sum = 0j
+    amplitude_magnitude = 0.0
 
     for res in valid_results:
         weight = res.plausibility / total_plausibility
         amplitude = math.sqrt(weight)
         phase_offset = res.phase - phase_reference
-        amplitude_sum += cmath.rect(amplitude, phase_offset)
+        vector = cmath.rect(amplitude, phase_offset)
+        amplitude_sum += vector
+        amplitude_magnitude += abs(vector)
         aligned_phases.append(phase_offset)
         hint = res.phase_hint or res.axis
         phase_support[hint] = phase_support.get(hint, 0.0) + weight
@@ -1409,8 +1419,11 @@ def combine_interpretations(
 
     coherence_boost = max(0.0, coherence)
     coherence_score = round((coherence + 1.0) / 2.0, 3)
-    base_probability = abs(amplitude_sum) ** 2
-    probability = min(1.0, base_probability * (1.0 + 0.5 * coherence_boost) * bias)
+
+    normalised_amplitude = amplitude_sum / amplitude_magnitude if amplitude_magnitude else 0j
+    base_probability = abs(normalised_amplitude) ** 2
+    support_strength = min(1.0, total_plausibility)
+    probability = min(1.0, base_probability * (1.0 + 0.5 * coherence_boost) * bias * support_strength)
 
     mean_phase = sum(aligned_phases) / count if count else 0.0
     variance = sum((phase - mean_phase) ** 2 for phase in aligned_phases) / count if count else 0.0
