@@ -1,19 +1,24 @@
 import math
+from datetime import datetime, timezone
 
 from api.services.ingestion_pipeline import (
     admissibility_check,
     ambiguity_score,
     analyze_case,
     bias_aware_outcome,
+    combine_interpretations,
     collect_sources,
     export,
     fact_pattern_embed,
     generate_arguments,
     hybrid_search,
     interpretation_qubits,
+    InterpretationAggregate,
+    InterpretationMeasurement,
     intertextuality_score,
     normalize_docs,
     parse_citations,
+    Provenance,
     validate_and_score,
 )
 
@@ -74,6 +79,115 @@ def test_quantum_bias_adjustment():
     outcome = bias_aware_outcome("hearsay issue", "VSCA")
     assert 0 < outcome.probability <= 1
     assert 0 <= outcome.inconsistency <= 1
+
+
+def _test_provenance(stage: str, method: str) -> Provenance:
+    return Provenance(stage=stage, method=method, timestamp=datetime.now(timezone.utc), inputs={})
+
+
+def test_combine_interpretations_coherence_boosts_probability():
+    coherent_results = [
+        InterpretationMeasurement(
+            axis="textual",
+            plausibility=0.6,
+            phase=0.2,
+            phase_hint="textualist",
+            provenance=_test_provenance("quantum", "textual"),
+        ),
+        InterpretationMeasurement(
+            axis="purposive",
+            plausibility=0.4,
+            phase=0.25,
+            phase_hint="purposive",
+            provenance=_test_provenance("quantum", "purposive"),
+        ),
+    ]
+    combined = combine_interpretations(coherent_results, "VSCA")
+    assert isinstance(combined, InterpretationAggregate)
+    single = combine_interpretations(coherent_results[:1], "VSCA")
+    assert combined.probability >= single.probability
+    assert 0 <= combined.inconsistency <= 1
+    assert 0 <= combined.coherence <= 1
+    assert math.isclose(sum(combined.phase_support.values()), 1.0, rel_tol=0.05)
+
+    conflicting = combine_interpretations(
+        coherent_results
+        + [
+            InterpretationMeasurement(
+                axis="procedural",
+                plausibility=0.3,
+                phase=coherent_results[0].phase + math.pi / 2,
+                phase_hint="procedural",
+                provenance=_test_provenance("quantum", "procedural"),
+            )
+        ],
+        "VSCA",
+    )
+    assert conflicting.inconsistency >= combined.inconsistency
+    assert conflicting.probability <= 1
+
+
+def test_combine_interpretations_respects_total_plausibility():
+    base = [
+        InterpretationMeasurement(
+            axis="textual",
+            plausibility=0.6,
+            phase=0.1,
+            phase_hint="textualist",
+            provenance=_test_provenance("quantum", "textual"),
+        ),
+        InterpretationMeasurement(
+            axis="purposive",
+            plausibility=0.4,
+            phase=0.1,
+            phase_hint="purposive",
+            provenance=_test_provenance("quantum", "purposive"),
+        ),
+    ]
+
+    scaled = [
+        InterpretationMeasurement(
+            axis=item.axis,
+            plausibility=item.plausibility * 0.4,
+            phase=item.phase,
+            phase_hint=item.phase_hint,
+            provenance=item.provenance,
+        )
+        for item in base
+    ]
+
+    rich = combine_interpretations(base, "VSC")
+    attenuated = combine_interpretations(scaled, "VSC")
+
+    assert attenuated.court == "VSC"
+    assert 0 <= attenuated.probability <= rich.probability
+
+
+def test_combine_interpretations_accepts_custom_phase():
+    results = [
+        InterpretationMeasurement(
+            axis="textual",
+            plausibility=0.7,
+            phase=0.2,
+            phase_hint=None,
+            provenance=_test_provenance("quantum", "textual"),
+        ),
+        InterpretationMeasurement(
+            axis="rights",
+            plausibility=0.5,
+            phase=0.9,
+            phase_hint="rights",
+            provenance=_test_provenance("quantum", "rights"),
+        ),
+    ]
+
+    custom = combine_interpretations(results, math.pi / 3)
+    reference = combine_interpretations(results, "VSCA")
+
+    assert custom.court == "custom"
+    assert 0 <= custom.probability <= 1
+    assert 0 <= custom.inconsistency <= 1
+    assert custom.probability != reference.probability
 
 
 def test_intertextuality_and_ambiguity_scores():

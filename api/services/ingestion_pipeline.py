@@ -9,11 +9,12 @@ while still reflecting realistic workflows for Victorian (VIC) matters.
 
 from __future__ import annotations
 
+import cmath
 import math
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
 from .quantum_model import LegalQubit
 
@@ -465,6 +466,30 @@ class BiasAwareOutcome:
     court: str
     probability: float
     inconsistency: float
+    provenance: Provenance
+
+
+@dataclass
+class InterpretationMeasurement:
+    """Measurement result for a single jurisprudential axis."""
+
+    axis: str
+    plausibility: float
+    phase: float
+    phase_hint: Optional[str]
+    provenance: Provenance
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class InterpretationAggregate:
+    """Aggregate outcome from combining interpretation measurements."""
+
+    court: str
+    probability: float
+    inconsistency: float
+    phase_support: Dict[str, float]
+    coherence: float
     provenance: Provenance
 
 
@@ -1317,6 +1342,103 @@ def bias_aware_outcome(issue: str, court: str) -> BiasAwareOutcome:
     phase_spread = max(q.phase for q in qubits) - min(q.phase for q in qubits) if qubits else 0.0
     inconsistency = round(min(1.0, phase_spread / math.pi), 3)
     return BiasAwareOutcome(court=court, probability=round(probability, 3), inconsistency=inconsistency, provenance=_prov("quantum", "bias_aware_outcome", court=court))
+
+
+def combine_interpretations(
+    results: Sequence[InterpretationMeasurement], court_phase: Union[str, float]
+) -> InterpretationAggregate:
+    """Combine measurement outputs into a bias-aware aggregate."""
+
+    if isinstance(court_phase, str):
+        court_label = court_phase
+        bias = COURT_PHASE_BIAS.get(court_phase.upper(), 0.5)
+        phase_reference = math.pi * bias
+    else:
+        court_label = "custom"
+        phase_reference = float(court_phase)
+        bias = 0.5 + 0.25 * math.cos(phase_reference)
+        bias = max(0.25, min(0.75, bias))
+
+    prov = _prov(
+        "quantum",
+        "combine_interpretations",
+        court=court_label,
+        phase=round(phase_reference, 3),
+        bias=round(bias, 3),
+    )
+
+    valid_results = [res for res in results if res.plausibility > 0]
+    if not valid_results:
+        return InterpretationAggregate(
+            court=court_label,
+            probability=0.0,
+            inconsistency=0.0,
+            phase_support={},
+            coherence=0.0,
+            provenance=prov,
+        )
+
+    total_plausibility = sum(res.plausibility for res in valid_results)
+    if total_plausibility <= 0:
+        return InterpretationAggregate(
+            court=court_label,
+            probability=0.0,
+            inconsistency=0.0,
+            phase_support={},
+            coherence=0.0,
+            provenance=prov,
+        )
+
+    phase_support: Dict[str, float] = {}
+    aligned_phases: List[float] = []
+    amplitude_sum = 0j
+    amplitude_magnitude = 0.0
+
+    for res in valid_results:
+        weight = res.plausibility / total_plausibility
+        amplitude = math.sqrt(weight)
+        phase_offset = res.phase - phase_reference
+        vector = cmath.rect(amplitude, phase_offset)
+        amplitude_sum += vector
+        amplitude_magnitude += abs(vector)
+        aligned_phases.append(phase_offset)
+        hint = res.phase_hint or res.axis
+        phase_support[hint] = phase_support.get(hint, 0.0) + weight
+
+    count = len(aligned_phases)
+    if count > 1:
+        pair_sum = 0.0
+        pair_count = 0
+        for idx in range(count):
+            for jdx in range(idx + 1, count):
+                pair_sum += math.cos(aligned_phases[idx] - aligned_phases[jdx])
+                pair_count += 1
+        coherence = pair_sum / pair_count if pair_count else 0.0
+    else:
+        coherence = 1.0
+
+    coherence_boost = max(0.0, coherence)
+    coherence_score = round((coherence + 1.0) / 2.0, 3)
+
+    normalised_amplitude = amplitude_sum / amplitude_magnitude if amplitude_magnitude else 0j
+    base_probability = abs(normalised_amplitude) ** 2
+    support_strength = min(1.0, total_plausibility)
+    probability = min(1.0, base_probability * (1.0 + 0.5 * coherence_boost) * bias * support_strength)
+
+    mean_phase = sum(aligned_phases) / count if count else 0.0
+    variance = sum((phase - mean_phase) ** 2 for phase in aligned_phases) / count if count else 0.0
+    inconsistency = min(1.0, variance / (math.pi**2))
+
+    rounded_support = {key: round(value, 3) for key, value in phase_support.items() if value > 0}
+
+    return InterpretationAggregate(
+        court=court_label,
+        probability=round(probability, 3),
+        inconsistency=round(inconsistency, 3),
+        phase_support=rounded_support,
+        coherence=coherence_score,
+        provenance=prov,
+    )
 
 
 def analyze_case(facts: str, issues: Sequence[str], stage: str, jurisdiction: str = "VIC") -> AnalysisBundle:
