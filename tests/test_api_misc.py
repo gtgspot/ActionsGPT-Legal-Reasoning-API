@@ -2,6 +2,7 @@ import uuid
 
 from fastapi.testclient import TestClient
 
+from api.services.ingestion_pipeline import analyze_case, generate_arguments
 from api.state import DOCS
 from api.utils import now_iso
 from app import app
@@ -40,6 +41,16 @@ def test_arguments_build():
     assert r.status_code == 200
     atoms = r.json().get("atoms", [])
     assert atoms and "issue" in atoms[0]
+    bundle = analyze_case(
+        facts="Certificate raised under Evidence Act 2008 (Vic) s 138.",
+        issues=["Admissibility"],
+        stage="hearing",
+    )
+    arguments = generate_arguments(bundle)
+    assert arguments and arguments[0].ambiguity.score >= 0
+    assert arguments[0].intertextuality.score >= 0
+    assert arguments[0].phase_vector
+    assert arguments[0].audit_id
 
 
 def test_qa_stub():

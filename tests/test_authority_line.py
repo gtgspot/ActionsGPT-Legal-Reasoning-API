@@ -2,6 +2,7 @@ import uuid
 
 from fastapi.testclient import TestClient
 
+from api.services.ingestion_pipeline import analyze_case, generate_arguments
 from api.state import DOCS
 from api.utils import now_iso
 from app import app
@@ -31,4 +32,8 @@ def test_authority_line_assembles_binding_then_supporting():
     # VSC appears as supporting
     supp = line.get("supporting", [])
     assert any("VSC" in (s.get("neutral_citation") or "") for s in supp)
+    bundle = analyze_case(facts=text, issues=["precedents"], stage="appeal")
+    arguments = generate_arguments(bundle)
+    assert arguments and all("canonical_id" in auth for auth in arguments[0].authorities)
+    assert arguments[0].audit_id
 

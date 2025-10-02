@@ -57,6 +57,12 @@ def test_analysis_pipeline_integration():
     admissibility = admissibility_check(arguments[0].irac.application)
     assert any(gate.gate == "hearsay" for gate in admissibility)
     assert argument.irac.conclusion
+    assert argument.proposition == argument.irac.conclusion
+    assert argument.authorities and isinstance(argument.authorities[0], dict)
+    assert argument.ambiguity.score >= 0
+    assert argument.intertextuality.score >= 0
+    assert argument.phase_vector and all(isinstance(v, float) for v in argument.phase_vector.values())
+    assert argument.audit_id.startswith("argument_compiled:")
     exported = export(arguments, template="ILAC_MagCt")
     assert "Template" in exported.content
 
