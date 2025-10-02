@@ -3,20 +3,20 @@
   "applications": {
     "v0-preliminary-brief-graph": {
       "development": {
-        "fallback": "v0-vla.vercel.app"
+        "fallback": "legis.com.au"
       }
     },
     "actions-gpt-legal-reasoning-api": {
       "routing": [
         {
-          "paths": [/* add paths here */]
+          "paths": ["/", "/*"]
         }
       ]
     },
     "lexpedite-blawx": {
       "routing": [
         {
-          "paths": [/* add paths here */]
+          "paths": ["/", "/*"]
         }
       ]
     }
