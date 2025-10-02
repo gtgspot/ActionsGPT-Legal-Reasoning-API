@@ -38,8 +38,16 @@ def test_arguments_build():
     doc_id = _make_doc("Certificate raised under Evidence Act 2008 (Vic) s 138.")
     r = client.post("/arguments/build", json={"doc_id": doc_id})
     assert r.status_code == 200
-    atoms = r.json().get("atoms", [])
+    body = r.json()
+    assert body.get("auditId")
+    atoms = body.get("atoms", [])
     assert atoms and "issue" in atoms[0]
+    atom = atoms[0]
+    assert atom.get("proposition")
+    assert atom.get("authorities")
+    assert {"textual", "purposivism", "rights"} <= set(atom.get("phase_vector", {}).keys())
+    assert isinstance(atom.get("ambiguity"), float)
+    assert isinstance(atom.get("intertextuality"), float)
 
 
 def test_qa_stub():

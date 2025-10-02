@@ -9,6 +9,8 @@ while still reflecting realistic workflows for Victorian (VIC) matters.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 import re
 from dataclasses import dataclass, field
@@ -456,6 +458,7 @@ class AuditRecord:
     event: str
     payload: Dict[str, Any]
     provenance: Provenance
+    record_id: str
 
 
 @dataclass
@@ -1268,7 +1271,15 @@ _AUDIT_LOG: List[AuditRecord] = []
 def audit_log(event: str, payload: Mapping[str, Any]) -> AuditRecord:
     """Append an entry to the in-memory audit log."""
 
-    record = AuditRecord(event=event, payload=dict(payload), provenance=_prov("governance", "audit_log", event=event))
+    payload_copy = dict(payload)
+    fingerprint_source = f"{event}|{json.dumps(payload_copy, sort_keys=True, default=str)}"
+    record_id = hashlib.sha256(fingerprint_source.encode()).hexdigest()[:16]
+    record = AuditRecord(
+        event=event,
+        payload=payload_copy,
+        provenance=_prov("governance", "audit_log", event=event),
+        record_id=record_id,
+    )
     _AUDIT_LOG.append(record)
     return record
 

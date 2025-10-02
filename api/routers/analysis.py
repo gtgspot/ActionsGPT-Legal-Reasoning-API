@@ -23,6 +23,12 @@ from ..schemas import (
     SalienceScoreRequest,
 )
 from ..security import api_key_guard
+from ..services.ingestion_pipeline import (
+    ambiguity_score,
+    audit_log,
+    intertextuality_score,
+    interpretation_qubits,
+)
 from ..services.precedent import (
     build_authority_line,
     compute_precedential_weight,
@@ -237,8 +243,9 @@ def arguments_build(payload: ArgumentsBuildRequest):
         raise HTTPException(404, "doc not found")
     # Build authority line from any neutral citations in the doc text
     text = "\n\n".join(DOCS[doc_id].get("text_chunks", []))
+    citations = guess_citations(text)
     precedents = []
-    for c in guess_citations(text):
+    for c in citations:
         if (c.type or "").lower() == "judgment":
             meta = parse_neutral_citation(c.title or "")
             meta.precedential_weight = compute_precedential_weight(meta, now_year=datetime.now(UTC).year)
@@ -261,7 +268,44 @@ def arguments_build(payload: ArgumentsBuildRequest):
         ],
         "authority_line": build_authority_line(precedents),
     }
-    return {"atoms": [atom]}
+    neutral_citations = [
+        p.get("meta", {}).get("neutral_citation")
+        for p in precedents
+        if p.get("meta", {}).get("neutral_citation")
+    ]
+    proposition_suffix = f" ({'; '.join(neutral_citations)})" if neutral_citations else ""
+    atom["proposition"] = f"{atom['issue']} — {atom['conclusion']}{proposition_suffix}"
+    atom["authorities"] = [
+        {"identifier": ref.source_id, "title": ref.title, "pinpoint": ref.pinpoint}
+        for ref in citations
+    ]
+
+    qubits = interpretation_qubits(atom["issue"])
+    phase_vector = {"textual": 0.0, "purposivism": 0.0, "rights": 0.0}
+    for q in qubits:
+        interpretation = (q.metadata or {}).get("interpretation")
+        if interpretation == "textual":
+            phase_vector["textual"] = float(q.phase)
+        elif interpretation == "purposive":
+            phase_vector["purposivism"] = float(q.phase)
+        elif interpretation == "pragmatic":
+            phase_vector["rights"] = float(q.phase)
+    atom["phase_vector"] = phase_vector
+
+    citation_titles = [ref.title for ref in citations if ref.title]
+    atom["ambiguity"] = ambiguity_score(text).score
+    atom["intertextuality"] = intertextuality_score(text, citation_titles).score
+
+    record = audit_log(
+        "arguments.build",
+        {
+            "doc_id": doc_id,
+            "issue": atom["issue"],
+            "conclusion": atom["conclusion"],
+            "citations": citation_titles,
+        },
+    )
+    return {"atoms": [atom], "auditId": record.record_id}
 
 
 @router.post("/salience/score")
