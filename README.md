@@ -15,6 +15,18 @@ Minimal, typed FastAPI service for legal reasoning primitives: ingest, structure
 - Static docs site: landing, explorer, citations map, API docs, knowledge base
   - Chat Q&A page (simple chat UI backed by /chat)
 
+# MCP filesystem example setup
+
+The `mcp.py` sample relies on the OpenAI Agents SDK. Install the pinned
+dependency (`openai-agents==0.1.0`) via the standard project workflow, e.g.
+`pip install -r requirements.txt`, before running the example. You can verify
+the SDK is available with:
+
+```bash
+python -c "from agents import Agent; from agents.mcp import MCPServer"
+python mcp.py --help
+```
+
 # Quantum‑Inspired Model of Legal Conditions and Outcomes (for Project Agent)
 
 > **Pedagogical aim:** Introduce quantum and mathematical concepts as needed; assume no prior knowledge.

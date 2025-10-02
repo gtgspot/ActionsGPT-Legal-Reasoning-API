@@ -4,3 +4,4 @@ black
 mypy
 PyJWT
 requests
+openai-agents==0.1.0
