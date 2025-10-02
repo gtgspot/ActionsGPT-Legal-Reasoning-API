@@ -332,9 +332,27 @@ class Argument:
     irac: IRACBlock
     counters: List[CounterArgument]
     procedure: ProcedureChecklist
-    authorities: List[str]
+    proposition: str
+    authorities: List[Dict[str, str]]
+    phase_vector: Dict[str, float]
+    ambiguity: AmbiguityReport
+    intertextuality: IntertextualityReport
+    audit_id: str
     risk_notes: List[str]
     provenance: Provenance
+
+
+def _canonical_authority_ids(authorities: Sequence[Mapping[str, str]]) -> List[str]:
+    """Extract canonical identifiers from structured authority entries."""
+
+    ids: List[str] = []
+    for entry in authorities:
+        for key in ("canonical_id", "id", "identifier"):
+            value = entry.get(key)
+            if value:
+                ids.append(value)
+                break
+    return ids
 
 
 @dataclass
@@ -1131,7 +1149,7 @@ def authority_consistency(argument: Argument, graph: LinkGraph) -> ConsistencyRe
     """Check for contradictions between cited authorities and graph relations."""
 
     conflicts: List[str] = []
-    cited_set = set(argument.authorities)
+    cited_set = set(_canonical_authority_ids(argument.authorities))
     for edge in graph.edges:
         if edge.relation == "references" and edge.target in cited_set and edge.source in cited_set:
             conflicts.append(f"Circular reference between {edge.source} and {edge.target}")
@@ -1143,8 +1161,9 @@ def cite_verifier(argument: Argument, known_citations: Sequence[str]) -> Citatio
     """Ensure all citations exist in the corpus."""
 
     known_set = set(known_citations)
-    missing = [cit for cit in argument.authorities if cit not in known_set]
-    invalid = [cit for cit in argument.authorities if cit.startswith("http")]
+    canonical_ids = _canonical_authority_ids(argument.authorities)
+    missing = [cit for cit in canonical_ids if cit not in known_set]
+    invalid = [cit for cit in canonical_ids if cit.startswith("http")]
     valid = not missing and not invalid
     return CitationVerification(valid=valid, missing=missing, invalid=invalid, provenance=_prov("validation", "cite_verifier"))
 
@@ -1221,9 +1240,10 @@ def bundle_export(arguments: Sequence[Argument], template: str = "ILAC_MagCt") -
     for arg in arguments:
         lines.append(f"Issue: {arg.irac.issue}")
         lines.append(f"Conclusion: {arg.irac.conclusion}")
-        lines.append(f"Authorities: {', '.join(arg.authorities)}")
+        canonical_ids = _canonical_authority_ids(arg.authorities)
+        lines.append(f"Authorities: {', '.join(canonical_ids)}")
         lines.append("---")
-        attachments.extend(arg.authorities)
+        attachments.extend(canonical_ids)
     return ExportBundle(template=template, content="\n".join(lines), attachments=sorted(set(attachments)), provenance=_prov("export", "bundle_export", template=template))
 
 
@@ -1351,10 +1371,42 @@ def analyze_case(facts: str, issues: Sequence[str], stage: str, jurisdiction: st
 
 def _argument_from_bundle(bundle: AnalysisBundle, issue: str, stance: str) -> Argument:
     facts_text = " ".join(sec.text for doc in bundle.normalized_docs for sec in doc.sections[:1])
-    authorities = [cit.canonical_id for cset in bundle.citations for cit in cset.citations]
-    irac = IRAC_generate(issue, facts_text, authorities[:3])
+    authority_entries: List[Dict[str, str]] = []
+    seen: set[str] = set()
+    for cset in bundle.citations:
+        for cit in cset.citations:
+            canonical = cit.canonical_id or cit.raw
+            if not canonical or canonical in seen:
+                continue
+            seen.add(canonical)
+            authority_entries.append(
+                {
+                    "canonical_id": canonical,
+                    "raw": cit.raw,
+                    "pinpoint": cit.pinpoint or "",
+                    "source_id": cit.source_id,
+                    "section_id": cit.section_id or "",
+                }
+            )
+    irac = IRAC_generate(issue, facts_text, [entry["canonical_id"] for entry in authority_entries[:3]])
     counter = counter_generate(irac)
     procedure = procedure_generate(stance)
+    ambiguity = ambiguity_score(irac.application)
+    intertextuality = intertextuality_score(irac.application, irac.citations)
+    qubits = interpretation_qubits(issue)
+    phase_vector = {
+        str(qubit.metadata.get("interpretation") or qubit.metadata.get("rule") or f"mode_{idx}"): float(round(qubit.phase, 6))
+        for idx, qubit in enumerate(qubits)
+    }
+    audit_record = audit_log(
+        "argument_compiled",
+        {
+            "stance": stance,
+            "issue": issue,
+            "authorities": [entry["canonical_id"] for entry in authority_entries[:5]],
+        },
+    )
+    audit_id = f"{audit_record.event}:{audit_record.provenance.timestamp.isoformat()}"
     risk_notes = []
     if any("hearsay" in sec.text.lower() for doc in bundle.normalized_docs for sec in doc.sections):
         risk_notes.append("Hearsay objections anticipated.")
@@ -1363,7 +1415,12 @@ def _argument_from_bundle(bundle: AnalysisBundle, issue: str, stance: str) -> Ar
         irac=irac,
         counters=[counter],
         procedure=procedure,
-        authorities=authorities[:5],
+        proposition=irac.conclusion,
+        authorities=authority_entries[:5],
+        phase_vector=phase_vector,
+        ambiguity=ambiguity,
+        intertextuality=intertextuality,
+        audit_id=audit_id,
         risk_notes=risk_notes,
         provenance=_prov("api", "_argument_from_bundle", stance=stance),
     )
