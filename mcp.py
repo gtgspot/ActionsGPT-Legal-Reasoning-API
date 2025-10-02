@@ -12,7 +12,9 @@ import shutil
 from pathlib import Path
 
 from agents import Agent, Runner, trace
-from agents.mcp import MCPServer, MCPServerStdio
+from agents.mcp import MCPServer
+
+from tools.mcp_server import mcp_server_context
 
 
 def prepare_sample_directory(base_dir: str) -> str:
@@ -80,19 +82,10 @@ async def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     samples_dir = prepare_sample_directory(current_dir)
 
-    async with MCPServerStdio(
-        params={
-            "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-filesystem", samples_dir],
-        }
-    ) as server:
+    async with mcp_server_context(samples_dir) as server:
         with trace(workflow_name="MCP Filesystem Example"):
             await run(server)
 
 
 if __name__ == "__main__":
-    # Let's make sure the user has npx installed
-    if not shutil.which("npx"):
-        raise RuntimeError("npx is not installed. Please install it with `npm install -g npx`.")
-
     asyncio.run(main())
