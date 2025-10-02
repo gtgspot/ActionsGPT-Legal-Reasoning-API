@@ -15,6 +15,37 @@ Minimal, typed FastAPI service for legal reasoning primitives: ingest, structure
 - Static docs site: landing, explorer, citations map, API docs, knowledge base
   - Chat Q&A page (simple chat UI backed by /chat)
 
+## MCP server and external tool integrations
+
+The repository ships with a custom [Model Context Protocol](https://modelcontextprotocol.io) server (`tools/mcp_server.py`) used by the example agent in `mcp.py`. The server exposes:
+
+- **Filesystem tools** for listing and reading curated project artefacts from `sample_files/`.
+- **Codex tooling** that renders prompt templates using `codex_client.PromptClient` and the templates under `.codex/prompts/`.
+- **GitHub App helpers** that read repository metadata and trigger Actions workflows via the REST API while respecting the webhook verification implemented in `api/routers/webhooks.py`.
+- **Zapier hooks** that POST to configured automations through the `api/integrations/zapier.py` client.
+
+Run the sample agent locally with:
+
+```bash
+python mcp.py
+```
+
+The server runs entirely in‑process (no Node.js subprocess required) and reuses the `sample_files/` directory prepared by `mcp.py`.
+
+### Environment configuration
+
+Set the following variables before using the GitHub and Zapier tools:
+
+| Variable | Purpose |
+| --- | --- |
+| `GITHUB_APP_ID` | Numeric GitHub App ID (also used by `api/config.py`). |
+| `GITHUB_APP_PRIVATE_KEY` | PEM‑encoded private key for the GitHub App. |
+| `GITHUB_INSTALLATION_ID` | Installation ID for the repository scope you wish to manage. |
+| `GITHUB_APP_WEBHOOK_SECRET` | Shared secret used to verify webhook deliveries (required for dispatch helpers). |
+| `ZAPIER_HOOKS_JSON` | JSON object mapping hook names to `{ "url": "https://hooks.zapier.com/...", "secret": "optional" }`. |
+
+Place Codex prompt templates in `.codex/prompts/` and ensure `codex_config.json` points at the correct files. The Zapier integration accepts arbitrary payloads that include an `event` (defaults to the hook name) and a `data` object. GitHub workflow dispatches require the workflow filename or ID plus the target `ref`; optional `inputs` are forwarded to the workflow. If you provide a `repository_event_type`, the tool also issues a `repository_dispatch` event with the supplied `client_payload`, adding an HMAC `mcp_signature` that aligns with the webhook verification logic in `api/routers/webhooks.py`.
+
 # Quantum‑Inspired Model of Legal Conditions and Outcomes (for Project Agent)
 
 > **Pedagogical aim:** Introduce quantum and mathematical concepts as needed; assume no prior knowledge.
