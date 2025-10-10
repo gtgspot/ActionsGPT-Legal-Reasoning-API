@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Shield, Database, TestTube, Search, FileText, CheckCircle } from "lucide-react"
+import { InteractiveDemo } from "@/components/interactive-demo"
 
 export default function HomePage() {
   return (
@@ -31,8 +32,21 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Features Section */}
+      {/* Interactive Demo Section */}
       <div className="container mx-auto px-4 py-16 md:py-24">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4">Try It Now - No Account Required</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Experience all six components of the Legal Identity Management system in one comprehensive interactive demo
+          </p>
+        </div>
+        <div className="max-w-4xl mx-auto">
+          <InteractiveDemo />
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="container mx-auto px-4 py-16 md:py-24 bg-muted/30">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Minimal Legal Operational Playbook</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

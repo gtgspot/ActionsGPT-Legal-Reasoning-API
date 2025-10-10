@@ -55,3 +55,121 @@ export function calculateSimilarity(a: string, b: string): number {
   if (maxLength === 0) return 1.0
   return 1 - distance / maxLength
 }
+
+export function transliterateToAscii(text: string): string {
+  // First remove diacritics
+  let result = removeDiacritics(text)
+
+  // Basic transliteration for common non-Latin characters
+  const transliterationMap: Record<string, string> = {
+    // Arabic
+    ا: "a",
+    ب: "b",
+    ت: "t",
+    ث: "th",
+    ج: "j",
+    ح: "h",
+    خ: "kh",
+    د: "d",
+    ذ: "dh",
+    ر: "r",
+    ز: "z",
+    س: "s",
+    ش: "sh",
+    ص: "s",
+    ض: "d",
+    ط: "t",
+    ظ: "z",
+    ع: "",
+    غ: "gh",
+    ف: "f",
+    ق: "q",
+    ك: "k",
+    ل: "l",
+    م: "m",
+    ن: "n",
+    ه: "h",
+    و: "w",
+    ي: "y",
+    // Cyrillic
+    а: "a",
+    б: "b",
+    в: "v",
+    г: "g",
+    д: "d",
+    е: "e",
+    ё: "yo",
+    ж: "zh",
+    з: "z",
+    и: "i",
+    й: "y",
+    к: "k",
+    л: "l",
+    м: "m",
+    н: "n",
+    о: "o",
+    п: "p",
+    р: "r",
+    с: "s",
+    т: "t",
+    у: "u",
+    ф: "f",
+    х: "kh",
+    ц: "ts",
+    ч: "ch",
+    ш: "sh",
+    щ: "shch",
+    ъ: "",
+    ы: "y",
+    ь: "",
+    э: "e",
+    ю: "yu",
+    я: "ya",
+    // Greek
+    α: "a",
+    β: "b",
+    γ: "g",
+    δ: "d",
+    ε: "e",
+    ζ: "z",
+    η: "e",
+    θ: "th",
+    ι: "i",
+    κ: "k",
+    λ: "l",
+    μ: "m",
+    ν: "n",
+    ξ: "x",
+    ο: "o",
+    π: "p",
+    ρ: "r",
+    σ: "s",
+    ς: "s",
+    τ: "t",
+    υ: "y",
+    φ: "f",
+    χ: "ch",
+    ψ: "ps",
+    ω: "o",
+  }
+
+  result = result
+    .split("")
+    .map((char) => {
+      return transliterationMap[char] || char
+    })
+    .join("")
+
+  // Remove any remaining non-ASCII characters
+  result = result.replace(/[^\x00-\x7F]/g, "")
+
+  return result
+}
+
+export function getByteSequence(text: string): string {
+  const encoder = new TextEncoder()
+  const bytes = encoder.encode(text)
+  return Array.from(bytes)
+    .map((byte) => byte.toString(16).toUpperCase().padStart(2, "0"))
+    .join(" ")
+}
