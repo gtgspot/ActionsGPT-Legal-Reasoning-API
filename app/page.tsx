@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Shield, Database, TestTube, Search, FileText, CheckCircle } from "lucide-react"
-import { InteractiveDemo } from "@/components/interactive-demo"
+import { InteractiveDemoWrapper } from "@/components/interactive-demo-wrapper"
 
 export default function HomePage() {
   return (
@@ -41,7 +41,7 @@ export default function HomePage() {
           </p>
         </div>
         <div className="max-w-4xl mx-auto">
-          <InteractiveDemo />
+          <InteractiveDemoWrapper />
         </div>
       </div>
 
