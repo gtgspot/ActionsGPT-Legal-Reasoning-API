@@ -1,1 +1,0 @@
-window.__CONFIG__ = { apiBase: 'https://api.legis.com.au' };

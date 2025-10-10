@@ -1,6 +1,0 @@
-include README.md
-recursive-include config *.yml
-recursive-include data *.json
-exclude sandbox/*
-exclude tests/*
-exclude test/*
