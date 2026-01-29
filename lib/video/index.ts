@@ -176,6 +176,20 @@ export {
   ProgressStream,
 } from './stream-handler';
 
+// Ingestion service
+export {
+  initiateUpload,
+  uploadChunk,
+  completeUpload,
+  getUploadProgress as getIngestionUploadProgress,
+  getProcessingJobStatus,
+  getVideoStatus,
+  cancelUpload as cancelIngestionUpload,
+  cleanupExpiredSessions,
+  getActiveUploads as getActiveIngestionUploads,
+  isValidVideoType,
+} from './ingestion';
+
 /**
  * Quick check if the system is ready for video processing
  */
