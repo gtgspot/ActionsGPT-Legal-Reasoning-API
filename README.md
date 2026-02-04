@@ -15,6 +15,20 @@ Minimal, typed FastAPI service for legal reasoning primitives: ingest, structure
 - Static docs site: landing, explorer, citations map, API docs, knowledge base
   - Chat Q&A page (simple chat UI backed by /chat)
 
+## Codex PR Review Helper
+
+Use the PR review script to collect GitHub pull request data, summarize file changes, and
+produce a Codex-ready review bundle.
+
+```bash
+node scripts/review-prs.js --repo owner/name --state open --max-prs 5 --output pr-review.md
+```
+
+### Requirements
+
+- `GITHUB_TOKEN` set with read access to the repository.
+- Optional: `GITHUB_REPOSITORY` to avoid passing `--repo`.
+
 # Quantum‑Inspired Model of Legal Conditions and Outcomes (for Project Agent)
 
 > **Pedagogical aim:** Introduce quantum and mathematical concepts as needed; assume no prior knowledge.

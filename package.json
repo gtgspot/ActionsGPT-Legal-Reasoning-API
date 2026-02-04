@@ -6,6 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
+    "review-prs": "node scripts/review-prs.js",
     "start": "next start"
   },
   "dependencies": {
