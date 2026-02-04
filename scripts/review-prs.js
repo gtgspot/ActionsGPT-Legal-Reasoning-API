@@ -4,6 +4,9 @@ const fs = require("fs/promises");
 
 const DEFAULT_PER_PAGE = 30;
 const DEFAULT_MAX_PRS = 10;
+const DEFAULT_TIMEOUT_MS = 15000;
+const MAX_PER_PAGE = 100;
+const USER_AGENT = "codex-pr-review-helper";
 
 function parseArgs(argv) {
   const options = {
@@ -11,6 +14,7 @@ function parseArgs(argv) {
     state: "open",
     perPage: DEFAULT_PER_PAGE,
     maxPrs: DEFAULT_MAX_PRS,
+    timeoutMs: DEFAULT_TIMEOUT_MS,
     includePatches: false,
     format: "markdown",
     output: "",
@@ -50,6 +54,12 @@ function parseArgs(argv) {
           i += 1;
         }
         break;
+      case "--timeout":
+        options.timeoutMs = Number(value) || DEFAULT_TIMEOUT_MS;
+        if (!inlineValue) {
+          i += 1;
+        }
+        break;
       case "--include-patches":
         options.includePatches = true;
         break;
@@ -84,6 +94,7 @@ Options:
   --state open|closed|all
   --per-page 30          Results per page (default: 30)
   --max-prs 10           Max PRs to fetch (default: 10)
+  --timeout 15000        Request timeout in ms (default: 15000)
   --include-patches      Include file patches in output
   --format markdown|json Output format (default: markdown)
   --output path          Write output to a file instead of stdout
@@ -131,14 +142,24 @@ function collectFocus(filePaths) {
   return Array.from(focus);
 }
 
-async function fetchJson(url, token) {
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-  });
+async function fetchJson(url, token, timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  let response;
+
+  try {
+    response = await fetch(url, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": USER_AGENT,
+      },
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const errorBody = await response.text();
@@ -148,20 +169,21 @@ async function fetchJson(url, token) {
   return response.json();
 }
 
-async function fetchAllPages(url, token, perPage, maxItems) {
+async function fetchAllPages(url, token, perPage, maxItems, timeoutMs) {
   let page = 1;
   const results = [];
+  const normalizedPerPage = Math.min(Math.max(perPage, 1), MAX_PER_PAGE);
 
   while (results.length < maxItems) {
     const pageUrl = new URL(url);
-    pageUrl.searchParams.set("per_page", String(perPage));
+    pageUrl.searchParams.set("per_page", String(normalizedPerPage));
     pageUrl.searchParams.set("page", String(page));
 
     // eslint-disable-next-line no-await-in-loop
-    const data = await fetchJson(pageUrl.toString(), token);
+    const data = await fetchJson(pageUrl.toString(), token, timeoutMs);
     results.push(...data);
 
-    if (data.length < perPage) {
+    if (data.length < normalizedPerPage) {
       break;
     }
 
@@ -171,14 +193,14 @@ async function fetchAllPages(url, token, perPage, maxItems) {
   return results.slice(0, maxItems);
 }
 
-async function getPullRequestFiles(owner, repo, number, token) {
+async function getPullRequestFiles(owner, repo, number, token, timeoutMs) {
   const files = [];
   let page = 1;
 
   while (true) {
     const url = `https://api.github.com/repos/${owner}/${repo}/pulls/${number}/files?per_page=100&page=${page}`;
     // eslint-disable-next-line no-await-in-loop
-    const data = await fetchJson(url, token);
+    const data = await fetchJson(url, token, timeoutMs);
     files.push(...data);
 
     if (data.length < 100) {
@@ -262,6 +284,13 @@ async function main() {
     throw new Error("Repository is required. Use --repo owner/name or set GITHUB_REPOSITORY.");
   }
 
+  if (options.maxPrs <= 0) {
+    throw new Error("max-prs must be greater than zero.");
+  }
+  if (options.timeoutMs <= 0) {
+    throw new Error("timeout must be greater than zero.");
+  }
+
   const token = process.env.GITHUB_TOKEN;
   if (!token) {
     throw new Error("GITHUB_TOKEN is required to query the GitHub API.");
@@ -273,13 +302,19 @@ async function main() {
   }
 
   const pullsUrl = `https://api.github.com/repos/${owner}/${repo}/pulls?state=${options.state}`;
-  const pulls = await fetchAllPages(pullsUrl, token, options.perPage, options.maxPrs);
+  const pulls = await fetchAllPages(
+    pullsUrl,
+    token,
+    options.perPage,
+    options.maxPrs,
+    options.timeoutMs
+  );
 
   const pullRequests = [];
 
   for (const pr of pulls) {
     // eslint-disable-next-line no-await-in-loop
-    const files = await getPullRequestFiles(owner, repo, pr.number, token);
+    const files = await getPullRequestFiles(owner, repo, pr.number, token, options.timeoutMs);
     pullRequests.push({
       ...pr,
       files,

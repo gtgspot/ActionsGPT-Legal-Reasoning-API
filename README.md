@@ -22,12 +22,14 @@ produce a Codex-ready review bundle.
 
 ```bash
 node scripts/review-prs.js --repo owner/name --state open --max-prs 5 --output pr-review.md
+pnpm review-prs -- --repo owner/name --state open --max-prs 5 --output pr-review.md
 ```
 
 ### Requirements
 
 - `GITHUB_TOKEN` set with read access to the repository.
 - Optional: `GITHUB_REPOSITORY` to avoid passing `--repo`.
+- Optional: `--timeout` to override the default request timeout (15s).
 
 # Quantum‑Inspired Model of Legal Conditions and Outcomes (for Project Agent)
 
