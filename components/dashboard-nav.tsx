@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { Database, TestTube, Search, FileText, LayoutDashboard, LogOut, Shield, TrendingUp } from "lucide-react"
+import { Database, TestTube, Search, FileText, LayoutDashboard, LogOut, Shield, TrendingUp, BrainCircuit, Languages, Network } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
 
@@ -49,6 +49,21 @@ const navItems = [
     title: "Search Metrics",
     href: "/dashboard/search/metrics",
     icon: TrendingUp,
+  },
+  {
+    title: "Reasoning Engine",
+    href: "/dashboard/reasoning",
+    icon: BrainCircuit,
+  },
+  {
+    title: "NLP Console",
+    href: "/dashboard/nlp",
+    icon: Languages,
+  },
+  {
+    title: "Architecture",
+    href: "/dashboard/architecture",
+    icon: Network,
   },
 ]
 
