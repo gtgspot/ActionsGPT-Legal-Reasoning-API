@@ -26,12 +26,25 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to sign in")
+      }
+
+      const { error } = await supabase.auth.setSession(result.session)
       if (error) throw error
+
       router.push("/dashboard")
+      router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
