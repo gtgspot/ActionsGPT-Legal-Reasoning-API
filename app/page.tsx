@@ -1,30 +1,36 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Shield, Database, TestTube, Search, FileText, CheckCircle } from "lucide-react"
-import { InteractiveDemoWrapper } from "@/components/interactive-demo-wrapper"
+import { Sparkles, Brain, MessageSquare, Network, ArrowRight, Zap } from "lucide-react"
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
+      {/* Hero Section - Ultra Minimal */}
       <div className="border-b">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted mb-6">
-              <Shield className="h-4 w-4" />
-              <span className="text-sm font-medium">Legal Tech SaaS Platform</span>
+        <div className="container mx-auto px-4 py-20 md:py-32">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 mb-4">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Intelligent Analysis Platform</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">Legal Identity Management System</h1>
-            <p className="text-xl text-muted-foreground mb-8 text-pretty">
-              Enterprise-grade platform for managing multilingual identity records with complete data integrity,
-              round-trip testing, and court-ready exhibit generation.
+
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+              Analyze Anything
+            </h1>
+
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+              Logic validation, text analysis, and system design—powered by three integrated AI engines
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg">
-                <Link href="/auth/sign-up">Get Started</Link>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button asChild size="lg" className="text-lg px-8">
+                <Link href="/analyze">
+                  Start Analyzing
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
+              <Button asChild variant="outline" size="lg" className="text-lg px-8">
                 <Link href="/auth/login">Sign In</Link>
               </Button>
             </div>
@@ -32,196 +38,141 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Interactive Demo Section */}
-      <div className="container mx-auto px-4 py-16 md:py-24">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Try It Now - No Account Required</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Experience all six components of the Legal Identity Management system in one comprehensive interactive demo
-          </p>
-        </div>
-        <div className="max-w-4xl mx-auto">
-          <InteractiveDemoWrapper />
-        </div>
-      </div>
+      {/* Three Engines Section */}
+      <div className="container mx-auto px-4 py-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Three Powerful Engines</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Each engine operates independently but works together for comprehensive analysis
+            </p>
+          </div>
 
-      {/* Features Section */}
-      <div className="container mx-auto px-4 py-16 md:py-24 bg-muted/30">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Minimal Legal Operational Playbook</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Comprehensive compliance with legal standards for identity data management
-          </p>
-        </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="border-2 hover:border-primary/50 transition-colors">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Brain className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-xl">Reasoning Engine</CardTitle>
+                <CardDescription className="text-base">
+                  Logical inference and proof validation
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Propositional logic evaluation</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Forward & backward chaining</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Consistency checking</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Proof chain generation</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <Database className="h-10 w-10 mb-4 text-primary" />
-              <CardTitle>Dual-Field Identity</CardTitle>
-              <CardDescription>
-                Original script and canonical ASCII fields with zero-tolerance for lossy storage
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>UTF-8 encoding with byte-level verification</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>ICU 73.1+ and Unicode 15.0+ compliance</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>SHA-256 hash verification</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+            <Card className="border-2 hover:border-primary/50 transition-colors">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <MessageSquare className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-xl">NLP Engine</CardTitle>
+                <CardDescription className="text-base">
+                  Natural language understanding
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Sentiment analysis</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Intent recognition</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Entity extraction</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Discourse parsing</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <TestTube className="h-10 w-10 mb-4 text-primary" />
-              <CardTitle>Round-Trip Testing</CardTitle>
-              <CardDescription>
-                Automated validation of data integrity through storage, export, and presentation
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Character loss rate tracking</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Diacritic preservation verification</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Byte-level comparison</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+            <Card className="border-2 hover:border-primary/50 transition-colors">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Network className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-xl">Architecture Engine</CardTitle>
+                <CardDescription className="text-base">
+                  System design and topology
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Service mesh design</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Topology visualization</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Dependency analysis</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary shrink-0" />
+                    <span>Health monitoring</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <Database className="h-10 w-10 mb-4 text-primary" />
-              <CardTitle>Alias Register</CardTitle>
-              <CardDescription>
-                Single authoritative source for all identity variants including MRZ and native formats
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Confidence scoring for variants</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Source document tracking</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Automatic deduplication</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Search className="h-10 w-10 mb-4 text-primary" />
-              <CardTitle>Advanced Search</CardTitle>
-              <CardDescription>
-                Fuzzy matching with configurable thresholds and comprehensive performance metrics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Phonetic and Levenshtein matching</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>False positive/negative tracking</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Accent-insensitive options</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <FileText className="h-10 w-10 mb-4 text-primary" />
-              <CardTitle>Exhibit Generator</CardTitle>
-              <CardDescription>
-                Court-ready exhibits with visual proof, byte dumps, and cryptographic verification
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Screenshot capture with metadata</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Hexadecimal byte dumps</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Chain of custody tracking</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Shield className="h-10 w-10 mb-4 text-primary" />
-              <CardTitle>Compliance & Audit</CardTitle>
-              <CardDescription>Complete audit trails and compliance reporting for legal requirements</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Row-level security (RLS)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Complete operation logging</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 text-success shrink-0" />
-                  <span>Performance metrics dashboard</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+          <div className="text-center mt-12">
+            <Button asChild size="lg" className="text-lg px-8">
+              <Link href="/analyze">
+                Try It Now
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* CTA Section */}
-      <div className="border-t">
-        <div className="container mx-auto px-4 py-16">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
-            <p className="text-lg text-muted-foreground mb-8">
-              Join legal professionals using our platform for compliant identity management
+      <div className="border-t bg-muted/30">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-3xl mx-auto text-center space-y-6">
+            <h2 className="text-3xl md:text-4xl font-bold">Ready to analyze?</h2>
+            <p className="text-lg text-muted-foreground">
+              No credit card required. Start analyzing in seconds.
             </p>
-            <Button asChild size="lg">
-              <Link href="/auth/sign-up">Create Your Account</Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button asChild size="lg" className="text-lg px-8">
+                <Link href="/analyze">Start Free Analysis</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="text-lg px-8">
+                <Link href="/auth/sign-up">Create Account</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
