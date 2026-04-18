@@ -2,35 +2,34 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          python-version: '3.12'
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: pnpm
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt -r requirements-dev.txt
+        run: pnpm install --frozen-lockfile
 
-      - name: Ruff
-        run: ruff check .
+      - name: Test
+        run: pnpm test
 
-      - name: Mypy
-        run: mypy .
-
-      - name: Pytest
-        env:
-          PYTHONPATH: .
-        run: pytest -q
-
+      - name: Build
+        run: pnpm build
