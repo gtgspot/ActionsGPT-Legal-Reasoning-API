@@ -157,10 +157,13 @@ export interface DiscourseTree {
 
 // --- NLP Pipeline Result ---
 
+import type { DeonticProvision } from './modality';
+
 export interface NLPResult {
   tokens: Token[];
   intents: IntentMatch;
   semantics: SemanticAnalysis;
   discourse: DiscourseTree;
+  provisions: DeonticProvision[];
   processingTimeMs: number;
 }

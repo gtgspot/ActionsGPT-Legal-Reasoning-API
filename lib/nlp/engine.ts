@@ -25,6 +25,7 @@ import type {
   DiscourseRelation,
   NLPResult,
 } from './types';
+import { analyzeDeonticProvisions } from './modality';
 
 // --- Utility ---
 
@@ -554,12 +555,14 @@ export function processNLP(input: string): NLPResult {
   const intents = recognizeIntent(tokens);
   const semantics = analyzeSemantics(input, tokens);
   const discourse = parseDiscourse(input);
+  const provisions = analyzeDeonticProvisions(input);
 
   return {
     tokens,
     intents,
     semantics,
     discourse,
+    provisions,
     processingTimeMs: performance.now() - startTime,
   };
 }
